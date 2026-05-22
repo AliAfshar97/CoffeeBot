@@ -6,27 +6,36 @@ public class BaleMessageService
 {
     private readonly HttpClient _httpClient;
 
-    // Your API Information
-    private const string ApiUrl = "https://safir.bale.ai/api/v3/send_message";
-    private const string ApiAccessKey = "K6RklrhGcjtLZoSk";
-    private const int BotId = 1210996085;
+    private readonly IConfiguration _config;
 
-    public BaleMessageService(HttpClient httpClient)
+    public BaleMessageService(
+        HttpClient httpClient,
+        IConfiguration config)
     {
         _httpClient = httpClient;
+        _config = config;
     }
 
-    public async Task SendBulkMessageAsync(List<string> phoneNumbers, string text)
+    public async Task<bool> SendMessageAsync(
+        string phoneNumber,
+        string text)
     {
-        foreach (var phone in phoneNumbers)
+        try
         {
-            var requestBody = new
+            var apiKey =
+                _config["BaleSettings:ApiKey"];
+
+            var botId =
+                Convert.ToInt32(
+                    _config["BaleSettings:BotId"]);
+
+            var body = new
             {
                 request_id = Guid.NewGuid().ToString(),
 
-                bot_id = BotId,
+                bot_id = botId,
 
-                phone_number = phone,
+                phone_number = phoneNumber,
 
                 message_data = new
                 {
@@ -42,14 +51,8 @@ public class BaleMessageService
                                 {
                                     new
                                     {
-                                        text = "Open Website",
+                                        text = "Website",
                                         url = "https://example.com"
-                                    },
-
-                                    new
-                                    {
-                                        text = "Copy Code",
-                                        copy_text = "123456"
                                     }
                                 }
                             }
@@ -58,25 +61,38 @@ public class BaleMessageService
                 }
             };
 
-            var json = JsonSerializer.Serialize(requestBody);
+            var json =
+                JsonSerializer.Serialize(body);
 
-            var request = new HttpRequestMessage(HttpMethod.Post, ApiUrl);
+            var request =
+                new HttpRequestMessage(
+                    HttpMethod.Post,
+                    "https://safir.bale.ai/api/v3/send_message");
 
-            request.Headers.Add("api-access-key", ApiAccessKey);
+            request.Headers.Add(
+                "api-access-key",
+                apiKey);
 
-            request.Content = new StringContent(
-                json,
-                Encoding.UTF8,
-                "application/json");
+            request.Content =
+                new StringContent(
+                    json,
+                    Encoding.UTF8,
+                    "application/json");
 
-            var response = await _httpClient.SendAsync(request);
+            var response =
+                await _httpClient.SendAsync(request);
 
-            var responseContent = await response.Content.ReadAsStringAsync();
+            var result =
+                await response.Content.ReadAsStringAsync();
 
-            Console.WriteLine($"Phone: {phone}");
-            Console.WriteLine($"Status: {response.StatusCode}");
-            Console.WriteLine(responseContent);
-            Console.WriteLine("--------------------------------");
+            Console.WriteLine(result);
+
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return false;
         }
     }
 }
