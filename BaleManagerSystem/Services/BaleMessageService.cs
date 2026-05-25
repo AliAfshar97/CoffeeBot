@@ -41,22 +41,7 @@ public class BaleMessageService
                 {
                     message = new
                     {
-                        text = text,
-
-                        reply_markup = new
-                        {
-                            inline_keyboard = new object[]
-                            {
-                                new object[]
-                                {
-                                    new
-                                    {
-                                        text = "Website",
-                                        url = "https://example.com"
-                                    }
-                                }
-                            }
-                        }
+                        text = text
                     }
                 }
             };
