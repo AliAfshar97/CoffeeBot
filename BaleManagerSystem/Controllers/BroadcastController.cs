@@ -11,84 +11,21 @@ namespace BaleManagerSystem.Controllers
     [Route("api/[controller]")]
     public class BroadcastController : ControllerBase
     {
-        private readonly BaleMessageService _baleService;
+        private readonly BroadcastService _broadcast;
 
-        private readonly UserRepository _repo;
-
-        public BroadcastController(
-            BaleMessageService baleService,
-            UserRepository repo)
+        public BroadcastController(BroadcastService broadcast)
         {
-            _baleService = baleService;
-            _repo = repo;
+            _broadcast = broadcast;
         }
 
-        // ================= REGISTER USER =================
-        [HttpPost("register")]
-        public async Task<IActionResult> Register(
-            string phone)
+        [HttpPost]
+        public async Task<IActionResult> Send([FromBody] string message)
         {
-            await _repo.SaveUserAsync(phone);
-
-            return Ok("User Registered");
-        }
-
-        // ================= SEND BROADCAST =================
-        [HttpPost("send")]
-        public async Task<IActionResult> Send(
-            [FromBody] BroadcastRequest request)
-        {
-            var users =
-                await _repo.GetAllPhonesAsync();
-
-            int success = 0;
-            int failed = 0;
-
-            foreach (var phone in users)
-            {
-                try
-                {
-                    var result =
-                        await _baleService.SendMessageAsync(
-                            phone,
-                            request.Message);
-
-                    if (result)
-                    {
-                        success++;
-
-                        await _repo.SaveLogAsync(
-                            phone,
-                            request.Message,
-                            true);
-                    }
-                    else
-                    {
-                        failed++;
-
-                        await _repo.SaveLogAsync(
-                            phone,
-                            request.Message,
-                            false,
-                            "Send failed");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    failed++;
-
-                    await _repo.SaveLogAsync(
-                        phone,
-                        request.Message,
-                        false,
-                        ex.Message);
-                }
-            }
+            await _broadcast.SendToAll(message);
 
             return Ok(new
             {
-                Success = success,
-                Failed = failed
+                Success = true
             });
         }
     }

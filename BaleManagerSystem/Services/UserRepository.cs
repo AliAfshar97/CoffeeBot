@@ -2,113 +2,59 @@
 
 namespace BaleManagerSystem.Services
 {
-    public class UserRepository
+    public class UserRepository : IUserRepository
     {
-        private readonly IConfiguration _config;
+        private readonly IConfiguration _configuration;
 
-        public UserRepository(IConfiguration config)
+        public UserRepository(IConfiguration configuration)
         {
-            _config = config;
+            _configuration = configuration;
         }
 
-        private string ConnectionString =>
-            _config.GetConnectionString("SaleBotManagerDB")!;
-
-        // ================= SAVE USER =================
-        public async Task SaveUserAsync(
-            string phoneNumber,
-            string? username = null)
+        public async Task SaveUser(long chatId, string username)
         {
-            using var conn =
-                new SqlConnection(ConnectionString);
+            using var conn = new SqlConnection(
+                _configuration.GetConnectionString("SaleBotManagerDB"));
 
             await conn.OpenAsync();
 
             var cmd = new SqlCommand(@"
-            IF NOT EXISTS
-            (
-                SELECT 1
-                FROM BotUsers
-                WHERE PhoneNumber=@Phone
+            IF NOT EXISTS (
+                SELECT 1 FROM BotUserTransactions WHERE ChatId=@ChatId
             )
-            INSERT INTO BotUsers
-            (
-                PhoneNumber,
-                Username
-            )
+            INSERT INTO BotUserTransactions
+            (ChatId, Username, FirstSeen)
             VALUES
-            (
-                @Phone,
-                @Username
-            )
-        ", conn);
-
-            cmd.Parameters.AddWithValue("@Phone", phoneNumber);
+            (@ChatId, @Username, GETDATE())
+            ", conn);
+            
+            cmd.Parameters.AddWithValue("@ChatId", chatId);
             cmd.Parameters.AddWithValue("@Username", username ?? "");
 
             await cmd.ExecuteNonQueryAsync();
         }
 
-        // ================= GET USERS =================
-        public async Task<List<string>> GetAllPhonesAsync()
+        public async Task<List<long>> GetAllChatIds()
         {
-            List<string> phones = new();
+            List<long> ids = new();
 
-            using var conn =
-                new SqlConnection(ConnectionString);
+            using var conn = new SqlConnection(
+                _configuration.GetConnectionString("SaleBotManagerDB"));
 
             await conn.OpenAsync();
 
             var cmd = new SqlCommand(
-                "SELECT PhoneNumber FROM BotUsers",
+                "SELECT ChatId FROM BotUserTransactions",
                 conn);
 
-            using var reader =
-                await cmd.ExecuteReaderAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
 
             while (await reader.ReadAsync())
             {
-                phones.Add(reader.GetString(0));
+                ids.Add(reader.GetInt64(0));
             }
 
-            return phones;
-        }
-
-        // ================= LOG RESULT =================
-        public async Task SaveLogAsync(
-            string phone,
-            string message,
-            bool success,
-            string? error = null)
-        {
-            using var conn =
-                new SqlConnection(ConnectionString);
-
-            await conn.OpenAsync();
-
-            var cmd = new SqlCommand(@"
-            INSERT INTO BroadcastLogs
-            (
-                PhoneNumber,
-                MessageText,
-                IsSuccess,
-                ErrorMessage
-            )
-            VALUES
-            (
-                @Phone,
-                @Message,
-                @Success,
-                @Error
-            )
-        ", conn);
-
-            cmd.Parameters.AddWithValue("@Phone", phone);
-            cmd.Parameters.AddWithValue("@Message", message);
-            cmd.Parameters.AddWithValue("@Success", success);
-            cmd.Parameters.AddWithValue("@Error", error ?? "");
-
-            await cmd.ExecuteNonQueryAsync();
+            return ids;
         }
     }
 }
