@@ -1,4 +1,5 @@
-﻿using Dapper;
+﻿using BaleManagerSystem.Models;
+using Dapper;
 using Microsoft.Data.SqlClient;
 
 namespace BaleManagerSystem.Services
@@ -130,6 +131,25 @@ namespace BaleManagerSystem.Services
                 await connection.QueryAsync(sql);
 
             return result.ToList<dynamic>();
+        }
+
+        public async Task<List<UserModel>> GetUsersAsync()
+        {
+            using var connection =
+                new SqlConnection(ConnectionString);
+
+            var sql = @"
+                        SELECT
+                            Id,
+                            PhoneNumber,
+                            FirstSeen
+                        FROM BotUsers
+                        ORDER BY Id DESC";
+
+            var result =
+                await connection.QueryAsync<UserModel>(sql);
+
+            return result.ToList();
         }
     }
 

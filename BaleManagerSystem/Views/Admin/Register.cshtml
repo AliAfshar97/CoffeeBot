@@ -1,60 +1,280 @@
-﻿<!-- Views/Admin/Register.cshtml -->
+﻿@model BaleManagerSystem.Models.ViewModels.RegisterUserViewModel
+
 @{
-    ViewData["Title"] = "Register User";
+    ViewData["Title"] = "User Management";
+
+    var users =
+        ViewBag.Users as List<BaleManagerSystem.Models.UserModel>
+        ?? new List<BaleManagerSystem.Models.UserModel>();
 }
 
-<div class="card card-modern">
+<div class="row g-4">
 
-    <div class="card-body p-5">
+    <!-- REGISTER FORM -->
+    <div class="col-lg-4">
 
-        <div class="mb-4">
+        <div class="card border-0 shadow-lg rounded-4">
 
-            <h2 class="fw-bold">
-                <i class="bi bi-person-plus-fill text-primary"></i>
-                Register User
-            </h2>
+            <div class="card-body p-4">
 
-            <p class="text-muted">
-                Add a new user phone number to the system.
-            </p>
+                <div class="text-center mb-4">
+
+                    <div class="mb-3">
+
+                        <div class="bg-primary bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center"
+                             style="width:80px;height:80px;">
+
+                            <i class="bi bi-person-plus-fill fs-1"></i>
+
+                        </div>
+
+                    </div>
+
+                    <h2 class="fw-bold">
+                        Register User
+                    </h2>
+
+                    <p class="text-muted">
+                        Add a new Bale user
+                    </p>
+
+                </div>
+
+                <form method="post">
+
+                    <div class="mb-4">
+
+                        <label asp-for="Phone"
+                               class="form-label fw-semibold">
+                        </label>
+
+                        <input asp-for="Phone"
+                               class="form-control form-control-lg rounded-3"
+                               placeholder="989121234567" />
+
+                        <div class="form-text">
+
+                            Phone must start with 98
+                            and cannot contain 0 after 98
+
+                        </div>
+
+                        <span asp-validation-for="Phone"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-primary btn-lg w-100 rounded-3 shadow-sm">
+
+                        <i class="bi bi-check-circle-fill"></i>
+                        Register User
+
+                    </button>
+
+                </form>
+
+                @if (ViewBag.Message != null)
+                {
+                    <div class="alert alert-success mt-4 rounded-3 border-0">
+
+                        <i class="bi bi-check-circle-fill"></i>
+
+                        @ViewBag.Message
+
+                    </div>
+                }
+
+            </div>
 
         </div>
 
-        <form method="post">
+    </div>
 
-            <div class="mb-4">
 
-                <label class="form-label fw-semibold">
-                    Phone Number
-                </label>
+    <!-- USERS TABLE -->
+    <div class="col-lg-8">
 
-                <input type="text"
-                       name="phone"
-                       class="form-control form-control-lg"
-                       placeholder="Enter phone number" />
+        <div class="card border-0 shadow-lg rounded-4">
+
+            <div class="card-body p-4">
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+
+                    <div>
+
+                        <h2 class="fw-bold mb-1">
+
+                            <i class="bi bi-people-fill text-primary"></i>
+                            Registered Users
+
+                        </h2>
+
+                        <p class="text-muted mb-0">
+
+                            Total Users:
+                            <strong>@users.Count</strong>
+
+                        </p>
+
+                    </div>
+
+                    <div>
+
+                        <span class="badge bg-primary rounded-pill px-3 py-2">
+
+                            Active Users
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- SEARCH -->
+                <div class="mb-4">
+
+                    <input type="text"
+                           id="userSearch"
+                           class="form-control rounded-3"
+                           placeholder="Search phone number..." />
+
+                </div>
+
+
+                <!-- TABLE -->
+                <div class="table-responsive">
+
+                    <table class="table align-middle table-hover"
+                           id="usersTable">
+
+                        <thead class="table-light">
+
+                            <tr>
+
+                                <th>ID</th>
+
+                                <th>Phone Number</th>
+
+                                <th>Create Date</th>
+
+                                <th>Status</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            @if (users.Any())
+                            {
+                                foreach (var item in users)
+                                {
+                                    <tr>
+
+                                        <td>
+
+                                            <strong>
+                                                #@item.Id
+                                            </strong>
+
+                                        </td>
+
+                                        <td>
+
+                                            <div class="fw-semibold">
+                                                @item.PhoneNumber
+                                            </div>
+
+                                        </td>
+
+                                        <td>
+
+                                            @item.FirstSeen.ToString("yyyy/MM/dd HH:mm")
+
+                                        </td>
+
+                                        <td>
+
+                                            <span class="badge bg-success rounded-pill">
+
+                                                Active
+
+                                            </span>
+
+                                        </td>
+
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+
+                                    <td colspan="4"
+                                        class="text-center py-5 text-muted">
+
+                                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+
+                                        No registered users found
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
 
             </div>
 
-            <button type="submit"
-                    class="btn btn-primary btn-modern">
-
-                <i class="bi bi-check-circle-fill"></i>
-                Register User
-
-            </button>
-
-        </form>
-
-        @if (ViewBag.Message != null)
-        {
-            <div class="alert alert-success mt-4">
-
-                <i class="bi bi-check-circle-fill"></i>
-                @ViewBag.Message
-
-            </div>
-        }
+        </div>
 
     </div>
 
 </div>
+
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+
+        const searchInput =
+            document.getElementById("userSearch");
+
+        searchInput.addEventListener("keyup", function () {
+
+            const filter =
+                this.value.toLowerCase();
+
+            const rows =
+                document.querySelectorAll(
+                    "#usersTable tbody tr");
+
+            rows.forEach(row => {
+
+                const phone =
+                    row.cells[1]?.innerText
+                        .toLowerCase();
+
+                if (phone?.includes(filter)) {
+                    row.style.display = "";
+                }
+                else {
+                    row.style.display = "none";
+                }
+
+            });
+
+        });
+
+    </script>
+
+}

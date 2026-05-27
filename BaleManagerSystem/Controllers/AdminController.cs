@@ -1,6 +1,8 @@
 ﻿using BaleManagerSystem.Models;
+using BaleManagerSystem.Models.ViewModels;
 using BaleManagerSystem.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Numerics;
 using System.Threading.Tasks;
 
 namespace BaleManagerSystem.Controllers
@@ -27,19 +29,52 @@ namespace BaleManagerSystem.Controllers
         // ================= REGISTER =================
 
         [HttpGet]
-        public IActionResult Register()
+        public async Task<IActionResult> Register()
         {
-            return View();
+            var users =
+                await _repo.GetUsersAsync();
+
+            ViewBag.Users = users;
+
+            return View(new RegisterUserViewModel());
         }
 
         [HttpPost]
-        public async Task<IActionResult> Register(string phone)
+        public async Task<IActionResult> Register(RegisterUserViewModel model)
         {
-            await _repo.SaveUserAsync(phone);
+            var users =
+                    await _repo.GetUsersAsync();
 
-            ViewBag.Message = "User Registered";
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Users = users;
 
-            return  View();
+                return View(model);
+            }
+
+            if (users != null)
+            {
+                var isExistPhoneNumber = users.Where(u => u.PhoneNumber == model.Phone).Count() > 0;
+
+                ViewBag.Message =
+                    "شماره تلفن همراه کاربر از قبل وارد شده است.";
+
+                return View(users);
+            }
+
+            await _repo.SaveUserAsync(model.Phone);
+
+            ViewBag.Message =
+                "شماره همراه با موفقیت اضافه شد.";
+
+            var allUsers =
+                await _repo.GetUsersAsync();
+
+            ViewBag.Users = allUsers;
+
+            ModelState.Clear();
+
+            return View(new RegisterUserViewModel());
         }
 
         // ================= SEND =================
@@ -85,7 +120,7 @@ namespace BaleManagerSystem.Controllers
                             phone,
                             request.Message,
                             false,
-                            "Send failed");
+                            "خطا در ارسال");
                     }
                 }
                 catch (Exception ex)
