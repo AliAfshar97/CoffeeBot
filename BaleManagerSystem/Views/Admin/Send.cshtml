@@ -1,0 +1,90 @@
+﻿<!-- Views/Admin/Send.cshtml -->
+@model BaleManagerSystem.Models.BroadcastRequest
+
+@{
+    ViewData["Title"] = "Broadcast";
+}
+
+<div class="card card-modern">
+
+    <div class="card-body p-5">
+
+        <div class="mb-4">
+
+            <h2 class="fw-bold">
+                <i class="bi bi-megaphone-fill text-primary"></i>
+                Send Broadcast
+            </h2>
+
+            <p class="text-muted">
+                Send a message to all registered users.
+            </p>
+
+        </div>
+
+        <form method="post">
+
+            <div class="mb-4">
+
+                <label class="form-label fw-semibold">
+                    Message
+                </label>
+
+                <textarea asp-for="Message"
+                          class="form-control"
+                          rows="8"
+                          placeholder="Type your message here...">
+                </textarea>
+
+            </div>
+
+            <button type="submit"
+                    class="btn btn-success btn-modern">
+
+                <i class="bi bi-send-fill"></i>
+                Send Broadcast
+
+            </button>
+
+        </form>
+
+        @if (ViewBag.Success != null)
+        {
+            <div class="row mt-5">
+
+                <div class="col-md-6">
+
+                    <div class="alert alert-success">
+
+                        <h5>
+                            <i class="bi bi-check-circle-fill"></i>
+                            Successful
+                        </h5>
+
+                        <h3>@ViewBag.Success</h3>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <div class="alert alert-danger">
+
+                        <h5>
+                            <i class="bi bi-x-circle-fill"></i>
+                            Failed
+                        </h5>
+
+                        <h3>@ViewBag.Failed</h3>
+
+                    </div>
+
+                </div>
+
+            </div>
+        }
+
+    </div>
+
+</div>

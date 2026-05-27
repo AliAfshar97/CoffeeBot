@@ -1,0 +1,88 @@
+﻿<!-- Views/Admin/Logs.cshtml -->
+@model IEnumerable<dynamic>
+
+@{
+    ViewData["Title"] = "Logs";
+}
+
+<div class="card card-modern">
+
+    <div class="card-body p-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+
+                <h2 class="fw-bold">
+                    <i class="bi bi-clock-history text-primary"></i>
+                    Broadcast Logs
+                </h2>
+
+                <p class="text-muted mb-0">
+                    View all sent message history
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle">
+
+                <thead class="table-light">
+
+                    <tr>
+                        <th>PhoneNumber</th>
+                        <th>MessageText</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+
+                            <td>@item.PhoneNumber</td>
+
+                            <td>
+                                @item.MessageText
+                            </td>
+
+                            <td>
+
+                                @if (item.IsSuccess)
+                                {
+                                    <span class="badge bg-success">
+                                        Success
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                        Failed
+                                    </span>
+                                }
+
+                            </td>
+
+                            <td>
+                                @item.SentAt
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,70 @@
+﻿<!-- Views/Admin/Dashboard.cshtml -->
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+        <div class="page-title">Dashboard</div>
+        <div class="text-muted">
+            Bale Broadcast Management System
+        </div>
+    </div>
+
+</div>
+
+<div class="row g-4">
+
+    <div class="col-md-4">
+        <div class="stat-card bg-blue">
+
+            <h5>Total Users</h5>
+
+            <h1 class="fw-bold">
+                @ViewBag.TotalUsers
+            </h1>
+
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="stat-card bg-green">
+
+            <h5>Successful Sends</h5>
+
+            <h1 class="fw-bold">
+                @ViewBag.Success
+            </h1>
+
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="stat-card bg-red">
+
+            <h5>Failed Sends</h5>
+
+            <h1 class="fw-bold">
+                @ViewBag.Failed
+            </h1>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="card card-modern mt-5">
+    <div class="card-body p-4">
+
+        <h4 class="fw-bold mb-3">
+            Welcome
+        </h4>
+
+        <p class="text-muted">
+            This panel allows you to manage Bale users,
+            send broadcasts, and monitor messaging activity.
+        </p>
+
+    </div>
+</div>

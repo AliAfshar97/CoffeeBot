@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using Dapper;
+using Microsoft.Data.SqlClient;
 
 namespace BaleManagerSystem.Services
 {
@@ -110,5 +111,26 @@ namespace BaleManagerSystem.Services
 
             await cmd.ExecuteNonQueryAsync();
         }
+
+        public async Task<List<dynamic>> GetLogsAsync()
+        {
+            using var connection =
+                new SqlConnection(ConnectionString);
+
+            var sql = @"
+                        SELECT
+                            PhoneNumber,
+                            MessageText,
+                            IsSuccess,
+                            SentAt
+                        FROM BroadcastLogs
+                        ORDER BY Id DESC";
+
+            var result =
+                await connection.QueryAsync(sql);
+
+            return result.ToList<dynamic>();
+        }
     }
+
 }

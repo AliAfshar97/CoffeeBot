@@ -5,7 +5,7 @@ using Telegram.Bot;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllersWithViews();
 
 builder.Services.AddEndpointsApiExplorer();
 
@@ -30,6 +30,7 @@ builder.Services.AddSingleton<UserStateService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddScoped<SafirUserRepository>();
+
 builder.Services.AddHttpClient<BaleMessageService>();
 
 builder.Services.AddScoped<IConsultationRepository,
@@ -43,12 +44,33 @@ builder.Services.AddHostedService<BalePollingService>();
 
 var app = builder.Build();
 
-app.UseSwagger();
 
-app.UseSwaggerUI();
+// IMPORTANT
+// ONLY enable swagger in development
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+
+    app.UseSwaggerUI();
+}
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthorization();
+
+
+// API Controllers
 app.MapControllers();
+
+
+// MVC Routes
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Admin}/{action=Dashboard}/{id?}");
 
 app.Run();
