@@ -54,19 +54,29 @@ namespace BaleManagerSystem.Controllers
 
             if (users != null)
             {
-                var isExistPhoneNumber = users.Where(u => u.PhoneNumber == model.Phone).Count() > 0;
+                var isExistPhoneNumber = users.Where(u => u.PhoneNumber == model.PhoneNumber).Count() > 0;
+
+                if (isExistPhoneNumber)
+                {
+                    ViewBag.Message =
+                       "شماره تلفن همراه کاربر از قبل وارد شده است.";
+
+                    return View(users);
+                }
+            }
+            try
+            {
+                await _repo.SaveUserAsync(model.PhoneNumber);
 
                 ViewBag.Message =
-                    "شماره تلفن همراه کاربر از قبل وارد شده است.";
-
-                return View(users);
+                    "شماره همراه با موفقیت اضافه شد.";
             }
-
-            await _repo.SaveUserAsync(model.Phone);
-
-            ViewBag.Message =
-                "شماره همراه با موفقیت اضافه شد.";
-
+            catch (Exception)
+            {
+                ViewBag.Message =
+                    "ثبت کاربر با خطا مواجه شد.";
+            }
+            
             var allUsers =
                 await _repo.GetUsersAsync();
 
@@ -150,6 +160,14 @@ namespace BaleManagerSystem.Controllers
             var getLog = await _repo.GetLogsAsync();
 
             return View(getLog);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            await _repo.DeleteUserAsync(id);
+
+            return RedirectToAction(nameof(Register));
         }
     }
 }

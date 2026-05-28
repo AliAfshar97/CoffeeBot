@@ -44,11 +44,11 @@
 
                     <div class="mb-4">
 
-                        <label asp-for="Phone"
+                        <label asp-for="PhoneNumber"
                                class="form-label fw-semibold">
                         </label>
 
-                        <input asp-for="Phone"
+                        <input asp-for="PhoneNumber"
                                class="form-control form-control-lg rounded-3"
                                placeholder="989121234567" />
 
@@ -59,7 +59,7 @@
 
                         </div>
 
-                        <span asp-validation-for="Phone"
+                        <span asp-validation-for="PhoneNumber"
                               class="text-danger small">
                         </span>
 
@@ -161,6 +161,7 @@
                                 <th>Create Date</th>
 
                                 <th>Status</th>
+                                <th width="120">Actions</th>
 
                             </tr>
 
@@ -206,6 +207,28 @@
 
                                         </td>
 
+                                        <td>
+
+                                            <form method="post"
+                                                  asp-action="DeleteUser"
+                                                  asp-controller="Admin"
+                                                  onsubmit="return confirm('Delete this user?');">
+
+                                                <input type="hidden"
+                                                       name="id"
+                                                       value="@item.Id" />
+
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-danger rounded-3">
+
+                                                    <i class="bi bi-trash-fill"></i>
+
+                                                </button>
+
+                                            </form>
+
+                                        </td>
+
                                     </tr>
                                 }
                             }
@@ -213,7 +236,7 @@
                             {
                                 <tr>
 
-                                    <td colspan="4"
+                                    <td colspan="5"
                                         class="text-center py-5 text-muted">
 
                                         <i class="bi bi-inbox fs-1 d-block mb-3"></i>

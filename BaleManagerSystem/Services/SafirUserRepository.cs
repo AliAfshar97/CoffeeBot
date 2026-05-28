@@ -151,6 +151,21 @@ namespace BaleManagerSystem.Services
 
             return result.ToList();
         }
+
+        public async Task DeleteUserAsync(int id)
+        {
+            using var connection =
+                new SqlConnection(ConnectionString);
+
+            var sql = @"
+                        DELETE FROM BotUsers
+                        WHERE Id = @Id";
+
+            await connection.ExecuteAsync(sql, new
+            {
+                Id = id
+            });
+        }
     }
 
 }
