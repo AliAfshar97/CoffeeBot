@@ -142,6 +142,7 @@ namespace BaleManagerSystem.Services
                         SELECT
                             Id,
                             PhoneNumber,
+                            Username,
                             FirstSeen
                         FROM BotUsers
                         ORDER BY Id DESC";
@@ -165,6 +166,46 @@ namespace BaleManagerSystem.Services
             {
                 Id = id
             });
+        }
+
+        public async Task<int> GetTotalUsersCountAsync()
+        {
+            using var connection =
+                new SqlConnection(ConnectionString);
+
+            var sql = @"
+                    SELECT COUNT(*)
+                    FROM BotUsers";
+
+            return await connection.ExecuteScalarAsync<int>(sql);
+        }
+
+
+        public async Task<int> GetSuccessLogsCountAsync()
+        {
+            using var connection =
+                new SqlConnection(ConnectionString);
+
+            var sql = @"
+                    SELECT COUNT(*)
+                    FROM BroadcastLogs
+                    WHERE IsSuccess = 1";
+
+            return await connection.ExecuteScalarAsync<int>(sql);
+        }
+
+
+        public async Task<int> GetFailedLogsCountAsync()
+        {
+            using var connection =
+                new SqlConnection(ConnectionString);
+
+            var sql = @"
+                        SELECT COUNT(*)
+                        FROM BroadcastLogs
+                        WHERE IsSuccess = 0";
+
+            return await connection.ExecuteScalarAsync<int>(sql);
         }
     }
 

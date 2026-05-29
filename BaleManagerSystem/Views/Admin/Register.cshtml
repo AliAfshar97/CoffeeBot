@@ -54,12 +54,24 @@
 
                         <div class="form-text">
 
-                            Phone must start with 98
-                            and cannot contain 0 after 98
+                            شماره همراه باید با 98 شروع شود
+                            و شامل 0 اول نباشد.
 
                         </div>
 
+                        <label asp-for="Username"
+                               class="form-label fw-semibold">
+                        </label>
+
+                        <input asp-for="Username"
+                               class="form-control form-control-lg rounded-3"
+                               placeholder="نام و نام خانوادگی" />
+
                         <span asp-validation-for="PhoneNumber"
+                              class="text-danger small">
+                        </span>
+
+                        <span asp-validation-for="Username"
                               class="text-danger small">
                         </span>
 
@@ -158,6 +170,8 @@
 
                                 <th>Phone Number</th>
 
+                                <th>Username</th>
+
                                 <th>Create Date</th>
 
                                 <th>Status</th>
@@ -187,6 +201,14 @@
 
                                             <div class="fw-semibold">
                                                 @item.PhoneNumber
+                                            </div>
+
+                                        </td>
+
+                                        <td>
+
+                                            <div class="fw-semibold">
+                                                @item.Username
                                             </div>
 
                                         </td>
@@ -241,7 +263,7 @@
 
                                         <i class="bi bi-inbox fs-1 d-block mb-3"></i>
 
-                                        No registered users found
+                                        کاربری یافت نشد.
 
                                     </td>
 

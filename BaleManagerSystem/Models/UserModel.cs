@@ -6,6 +6,8 @@
 
         public string PhoneNumber { get; set; } = "";
 
+        public string Username { get; set; } = "";
+
         public DateTime FirstSeen { get; set; }
     }
 }

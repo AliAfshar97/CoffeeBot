@@ -21,8 +21,17 @@ namespace BaleManagerSystem.Controllers
             _repo = repo;
         }
         // DASHBOARD
-        public IActionResult Dashboard()
+        public async Task<IActionResult> Dashboard()
         {
+            ViewBag.TotalUsers =
+                await _repo.GetTotalUsersCountAsync();
+
+            ViewBag.Success =
+                await _repo.GetSuccessLogsCountAsync();
+
+            ViewBag.Failed =
+                await _repo.GetFailedLogsCountAsync();
+
             return View();
         }
 
@@ -66,7 +75,7 @@ namespace BaleManagerSystem.Controllers
             }
             try
             {
-                await _repo.SaveUserAsync(model.PhoneNumber);
+                await _repo.SaveUserAsync(model.PhoneNumber, model.Username);
 
                 ViewBag.Message =
                     "شماره همراه با موفقیت اضافه شد.";
@@ -90,28 +99,44 @@ namespace BaleManagerSystem.Controllers
         // ================= SEND =================
 
         [HttpGet]
-        public IActionResult Send()
+        public async Task<IActionResult> Send()
         {
-            return View();
+            var vm =
+             new BroadcastPageViewModel
+             {
+                 Users =
+                     await _repo.GetUsersAsync()
+             };
+
+            return View(vm);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Send(BroadcastRequest request)
+        public async Task<IActionResult> Send(BroadcastPageViewModel vm)
         {
-            var users =
-                await _repo.GetAllPhonesAsync();
+            vm.Users =
+                await _repo.GetUsersAsync();
+
+            if (vm.SelectedPhones == null
+                || !vm.SelectedPhones.Any())
+            {
+                ViewBag.Error =
+                    "انتخاب یک شماره الزامی است.";
+
+                return View(vm);
+            }
 
             int success = 0;
             int failed = 0;
 
-            foreach (var phone in users)
+            foreach (var phone in vm.SelectedPhones)
             {
                 try
                 {
                     var result =
                         await _baleService.SendMessageAsync(
                             phone,
-                            request.Message);
+                            vm.Message);
 
                     if (result)
                     {
@@ -119,7 +144,7 @@ namespace BaleManagerSystem.Controllers
 
                         await _repo.SaveLogAsync(
                             phone,
-                            request.Message,
+                            vm.Message,
                             true);
                     }
                     else
@@ -128,9 +153,9 @@ namespace BaleManagerSystem.Controllers
 
                         await _repo.SaveLogAsync(
                             phone,
-                            request.Message,
+                            vm.Message,
                             false,
-                            "خطا در ارسال");
+                            "Send failed");
                     }
                 }
                 catch (Exception ex)
@@ -139,18 +164,17 @@ namespace BaleManagerSystem.Controllers
 
                     await _repo.SaveLogAsync(
                         phone,
-                        request.Message,
+                        vm.Message,
                         false,
                         ex.Message);
                 }
             }
 
-            //return Ok(new
-            //{
-            //    Success = success,
-            //    Failed = failed
-            //});
-            return View();
+            ViewBag.Success = success;
+
+            ViewBag.Failed = failed;
+
+            return View(vm);
         }
 
         // ================= LOGS =================
@@ -169,5 +193,6 @@ namespace BaleManagerSystem.Controllers
 
             return RedirectToAction(nameof(Register));
         }
+
     }
 }

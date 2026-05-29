@@ -6,7 +6,7 @@ namespace BaleManagerSystem.Models.ViewModels
     {
         public int Id { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "شماره همراه به درستی وارد نشده است.")]
         [Display(Name = "شماره همراه")]
 
         [RegularExpression(
@@ -14,6 +14,10 @@ namespace BaleManagerSystem.Models.ViewModels
             ErrorMessage =
             "شماره همراه باید با 98 و بدون 0 شروع شود.")]
         public string PhoneNumber { get; set; } = "";
+
+        [Required(ErrorMessage = "نام کاربری به درستی وارد نشده است.")]
+        [Display(Name = "نام کاربر")]
+        public string Username { get; set; } = "";   
 
         public DateTime FirstSeen { get; set; }
     }
