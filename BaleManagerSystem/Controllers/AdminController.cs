@@ -1,12 +1,14 @@
 ﻿using BaleManagerSystem.Models;
 using BaleManagerSystem.Models.ViewModels;
 using BaleManagerSystem.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Numerics;
 using System.Threading.Tasks;
 
 namespace BaleManagerSystem.Controllers
 {
+    [Authorize]
     public class AdminController : Controller
     {
         private readonly BaleMessageService _baleService;

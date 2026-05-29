@@ -1,5 +1,6 @@
 ﻿using BaleManagerSystem.HostedServices;
 using BaleManagerSystem.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.OpenApi.Models;
 using Telegram.Bot;
 
@@ -24,6 +25,20 @@ builder.Services.AddSingleton<ITelegramBotClient>(x =>
 
     return new TelegramBotClient(token);
 });
+
+builder.Services
+    .AddAuthentication(
+        CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+
+        options.AccessDeniedPath =
+            "/Account/Login";
+
+        options.ExpireTimeSpan =
+            TimeSpan.FromDays(7);
+    });
 
 builder.Services.AddSingleton<UserStateService>();
 
@@ -61,8 +76,9 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthorization();
+app.UseAuthentication();
 
+app.UseAuthorization();
 
 // API Controllers
 app.MapControllers();
