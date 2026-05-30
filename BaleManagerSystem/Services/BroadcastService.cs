@@ -15,15 +15,17 @@ namespace BaleManagerSystem.Services
             _bot = bot;
         }
 
-        public async Task SendToAll(string message)
+        public async Task SendToUsers(
+            List<long> chatIds,
+            string message)
         {
-            var users = await _users.GetAllChatIds();
-
-            var tasks = users.Select(async x =>
+            var tasks = chatIds.Select(async chatId =>
             {
                 try
                 {
-                    await _bot.SendMessage(x, message);
+                    await _bot.SendMessage(
+                        chatId,
+                        message);
                 }
                 catch
                 {

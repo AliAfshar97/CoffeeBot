@@ -18,15 +18,15 @@ namespace BaleManagerSystem.Controllers
             _broadcast = broadcast;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Send([FromBody] string message)
-        {
-            await _broadcast.SendToAll(message);
-
-            return Ok(new
+        [HttpPost("selected")]
+        public async Task<IActionResult> SendSelected(
+            [FromBody] BroadcastRequest request)
             {
-                Success = true
-            });
+                await _broadcast.SendToUsers(
+                    request.ChatIds,
+                    request.Message);
+
+                return Ok();
+            }
         }
-    }
 }

@@ -15,12 +15,15 @@ namespace BaleManagerSystem.Controllers
 
         private readonly SafirUserRepository _repo;
 
+        private readonly BroadcastService _broadcast;
         public AdminController(
             BaleMessageService baleService,
-            SafirUserRepository repo)
+            SafirUserRepository repo,
+            BroadcastService broadcast)
         {
             _baleService = baleService;
             _repo = repo;
+            _broadcast = broadcast;
         }
         // DASHBOARD
         public async Task<IActionResult> Dashboard()
@@ -196,5 +199,16 @@ namespace BaleManagerSystem.Controllers
             return RedirectToAction(nameof(Register));
         }
 
+
+        [HttpPost("selected")]
+        public async Task<IActionResult> SendSelected(
+            [FromBody] BroadcastRequest request)
+        {
+            await _broadcast.SendToUsers(
+                request.ChatIds,
+                request.Message);
+
+            return Ok();
+        }
     }
 }
