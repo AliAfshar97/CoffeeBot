@@ -22,9 +22,9 @@ namespace BaleManagerSystem.Controllers
         public async Task<IActionResult> SendSelected(
             [FromBody] BroadcastRequest request)
             {
-                await _broadcast.SendToUsers(
-                    request.ChatIds,
-                    request.Message);
+                //await _broadcast.SendToUsers(
+                //    request.ChatIds,
+                //    request.Message);
 
                 return Ok();
             }

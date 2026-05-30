@@ -13,6 +13,8 @@
         public List<long> SelectedChatIds { get; set; }
             = new();
 
+        public IFormFile? Attachment { get; set; }
+
         public List<UserModel> PhoneUsers { get; set; }
             = new();
 

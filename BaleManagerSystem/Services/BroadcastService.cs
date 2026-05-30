@@ -18,7 +18,8 @@ namespace BaleManagerSystem.Services
 
         public async Task<BroadcastResult> SendToUsers(
             List<long> chatIds,
-            string message)
+            string message,
+            string? fileId = null)
         {
             int success = 0;
             int failed = 0;

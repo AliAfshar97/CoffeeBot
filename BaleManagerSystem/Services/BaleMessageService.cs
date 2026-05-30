@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using BaleManagerSystem.Models;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
@@ -18,7 +19,8 @@ public class BaleMessageService
 
     public async Task<bool> SendMessageAsync(
         string phoneNumber,
-        string text)
+        string text,
+        string fileId)
     {
         try
         {
@@ -27,7 +29,7 @@ public class BaleMessageService
 
             var botId =
                 Convert.ToInt32(
-                    _config["BaleSettings:BotId"]);
+                _config["BaleSettings:BotId"]);
 
             var body = new
             {
@@ -41,7 +43,8 @@ public class BaleMessageService
                 {
                     message = new
                     {
-                        text = text
+                        text = text,
+                        file_id = fileId
                     }
                 }
             };
@@ -79,5 +82,43 @@ public class BaleMessageService
             Console.WriteLine(ex.Message);
             return false;
         }
+    }
+
+    public async Task<string?> UploadFileAsync(
+        IFormFile file)
+    {
+        using var client = new HttpClient();
+
+        var _apiKey =
+                _config["BaleSettings:ApiKey"];
+
+        client.DefaultRequestHeaders.Add(
+            "api-access-key",
+            _apiKey);
+
+        using var form =
+            new MultipartFormDataContent();
+
+        using var stream =
+            file.OpenReadStream();
+
+        form.Add(
+            new StreamContent(stream),
+            "file",
+            file.FileName);
+
+        var response =
+            await client.PostAsync(
+                "https://safir.bale.ai/api/v3/upload_file",
+                form);
+
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        var result =
+            await response.Content
+                .ReadFromJsonAsync<UploadFileResponse>();
+
+        return result?.FileId;
     }
 }

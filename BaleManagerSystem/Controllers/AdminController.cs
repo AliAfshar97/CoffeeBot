@@ -151,10 +151,21 @@ namespace BaleManagerSystem.Controllers
                 {
                     try
                     {
+                        string? fileId = null;
+
+                        if (vm.Attachment != null)
+                        {
+                            fileId =
+                                await _baleService
+                                    .UploadFileAsync(
+                                        vm.Attachment);
+                        }
+
                         var result =
                             await _baleService.SendMessageAsync(
                                 phone,
-                                vm.Message);
+                                vm.Message,
+                                fileId);
 
                         if (result)
                         {
@@ -208,9 +219,20 @@ namespace BaleManagerSystem.Controllers
                 {
                     try
                     {
+                        string? fileId = null;
+
+                        if (vm.Attachment != null)
+                        {
+                            fileId =
+                                await _baleService
+                                    .UploadFileAsync(
+                                        vm.Attachment);
+                        }
+
                         var result = await _broadcast.SendToUsers(
                              vm.SelectedChatIds,
-                             vm.Message);
+                             vm.Message,
+                             fileId);
 
                         if (result.SuccessCount > 0)
                         {

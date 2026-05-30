@@ -1,10 +1,11 @@
 ﻿@model BaleManagerSystem.Models.ViewModels.BroadcastPageViewModel
 
 @{
-    ViewData["Title"] = "Broadcast";
+    ViewData["Title"] = "Broadcast Center";
 }
 
-<form method="post">
+<form method="post"
+      enctype="multipart/form-data">
 
     <div class="row g-4">
 
@@ -15,13 +16,21 @@
 
                 <div class="card-body p-4">
 
-                    <h2 class="fw-bold mb-4">
+                    <h2 class="fw-bold mb-3">
 
                         <i class="bi bi-megaphone-fill text-primary"></i>
-                        Broadcast Message
+                        Broadcast Center
 
                     </h2>
 
+                    <p class="text-muted mb-4">
+
+                        Send text messages and attachments
+                        to selected users.
+
+                    </p>
+
+                    <!-- MESSAGE -->
                     <div class="mb-4">
 
                         <label class="form-label fw-semibold">
@@ -32,12 +41,32 @@
 
                         <textarea asp-for="Message"
                                   class="form-control rounded-4"
-                                  rows="10"
+                                  rows="8"
                                   placeholder="Write your message here...">
-                    </textarea>
+                        </textarea>
 
                     </div>
 
+                    <!-- FILE -->
+                    <div class="mb-4">
+
+                        <label class="form-label fw-semibold">
+
+                            Attachment
+
+                        </label>
+
+                        <input asp-for="Attachment"
+                               type="file"
+                               class="form-control rounded-4" />
+
+                        <div class="form-text">
+
+                            PDF, Word, Excel, Images, ZIP ...
+
+                        </div>
+
+                    </div>
 
                     @if (ViewBag.Error != null)
                     {
@@ -52,11 +81,13 @@
                     {
                         <div class="alert alert-success rounded-4">
 
-                            <div class="fw-bold mb-2">
+                            <h6 class="fw-bold">
 
                                 Broadcast Completed
 
-                            </div>
+                            </h6>
+
+                            <hr />
 
                             Successful Sends:
                             <strong>@ViewBag.Success</strong>
@@ -69,11 +100,11 @@
                         </div>
                     }
 
-
                     <button type="submit"
                             class="btn btn-primary btn-lg w-100 rounded-4 shadow-sm">
 
                         <i class="bi bi-send-fill"></i>
+
                         Send Broadcast
 
                     </button>
@@ -83,7 +114,6 @@
             </div>
 
         </div>
-
 
         <!-- CONTACTS -->
         <div class="col-lg-7">
@@ -105,7 +135,7 @@
 
                             <p class="text-muted mb-0">
 
-                                Select users to receive message
+                                Select recipients
 
                             </p>
 
@@ -113,13 +143,17 @@
 
                         <span class="badge bg-primary rounded-pill px-3 py-2">
 
-                            @Model.PhoneUsers.Count Users
+                            @(Model.PhoneUsers.Count +
+                                                        Model.TelegramUsers.Count)
+
+                            Users
 
                         </span>
 
                     </div>
 
-                    <ul class="nav nav-pills mb-4" id="recipientTabs">
+                    <!-- TABS -->
+                    <ul class="nav nav-pills mb-4">
 
                         <li class="nav-item">
 
@@ -139,7 +173,7 @@
                                     class="nav-link"
                                     id="telegramTab">
 
-                                🤖 Telegram Users
+                                🤖 Bale Users
 
                             </button>
 
@@ -147,35 +181,46 @@
 
                     </ul>
 
-                    <input type="hidden"
-                           asp-for="RecipientType"
+                    <input asp-for="RecipientType"
+                           type="hidden"
                            id="recipientType" />
 
-
                     <!-- SEARCH -->
-                    <div class="mb-4">
+                    <div class="mb-3">
 
                         <input type="text"
                                id="userSearch"
                                class="form-control rounded-4"
-                               placeholder="Search phone number..." />
+                               placeholder="Search users..." />
 
                     </div>
 
+                    <!-- SELECTED COUNT -->
+                    <div class="alert alert-light border rounded-4">
+
+                        Selected Users:
+
+                        <strong id="selectedCount">
+
+                            0
+
+                        </strong>
+
+                    </div>
 
                     <!-- SELECT ALL -->
-                    <div class="mb-4">
+                    <div class="mb-3">
 
                         <div class="form-check">
 
-                            <input class="form-check-input"
-                                   type="checkbox"
+                            <input type="checkbox"
+                                   class="form-check-input"
                                    id="selectAll" />
 
-                            <label class="form-check-label fw-semibold"
+                            <label class="form-check-label"
                                    for="selectAll">
 
-                                Select All Users
+                                Select All
 
                             </label>
 
@@ -183,8 +228,6 @@
 
                     </div>
 
-
-                    <!-- USER LIST -->
                     <div style="max-height:550px;overflow-y:auto;">
 
                         <!-- PHONE USERS -->
@@ -209,7 +252,7 @@
 
                                             </div>
 
-                                            <div>
+                                            <div class="text-muted">
 
                                                 @user.Username
 
@@ -223,7 +266,6 @@
                             }
 
                         </div>
-
 
                         <!-- TELEGRAM USERS -->
                         <div id="telegramUsers"
@@ -250,7 +292,8 @@
 
                                             <div class="text-primary">
 
-                                                Chat ID: @user.ChatId
+                                                Chat ID:
+                                                @user.ChatId
 
                                             </div>
 
@@ -282,54 +325,11 @@
 
 </form>
 
-
-@section Scripts {
-
+@section Scripts
+{
     <script>
 
-        // SEARCH CONTACTS
-        document.getElementById("userSearch")
-            .addEventListener("keyup", function () {
-
-            let filter =
-                this.value.toLowerCase();
-
-            let users =
-                document.querySelectorAll(".user-item");
-
-            users.forEach(user => {
-
-                let text =
-                    user.innerText.toLowerCase();
-
-                if (text.includes(filter)) {
-                    user.style.display = "";
-                }
-                else {
-                    user.style.display = "none";
-                }
-
-            });
-
-        });
-
-
-        // SELECT ALL USERS
-        document.getElementById("selectAll")
-            .addEventListener("change", function () {
-
-            let checked = this.checked;
-
-            document.querySelectorAll(".user-checkbox")
-                .forEach(cb => {
-
-                cb.checked = checked;
-
-            });
-
-        });
-
-                const phoneTab =
+        const phoneTab =
             document.getElementById("phoneTab");
 
         const telegramTab =
@@ -343,6 +343,8 @@
 
         const recipientType =
             document.getElementById("recipientType");
+
+        recipientType.value = "Phone";
 
         phoneTab.addEventListener("click", () => {
 
@@ -360,13 +362,68 @@
             telegramTab.classList.add("active");
             phoneTab.classList.remove("active");
 
-            phoneUsers.style.display = "none";
             telegramUsers.style.display = "";
+            phoneUsers.style.display = "none";
 
             recipientType.value = "Telegram";
         });
 
-        recipientType.value = "Phone";
-    </script>
+        document.getElementById("userSearch")
+            .addEventListener("keyup", function () {
 
+                let filter =
+                    this.value.toLowerCase();
+
+                document
+                    .querySelectorAll(".user-item")
+                    .forEach(item => {
+
+                        let text =
+                            item.innerText.toLowerCase();
+
+                        item.style.display =
+                            text.includes(filter)
+                                ? ""
+                                : "none";
+                    });
+            });
+
+        document.getElementById("selectAll")
+            .addEventListener("change", function () {
+
+                let checked =
+                    this.checked;
+
+                document
+                    .querySelectorAll(".user-checkbox")
+                    .forEach(cb => {
+
+                        cb.checked = checked;
+                    });
+
+                updateSelectedCount();
+            });
+
+        function updateSelectedCount()
+        {
+            const count =
+                document.querySelectorAll(
+                    ".user-checkbox:checked")
+                    .length;
+
+            document.getElementById(
+                "selectedCount")
+                .innerText = count;
+        }
+
+        document.addEventListener("change",
+            function (e)
+            {
+                if (e.target.classList.contains("user-checkbox"))
+                {
+                    updateSelectedCount();
+                }
+            });
+
+    </script>
 }
