@@ -4,12 +4,19 @@
     {
         public string Message { get; set; } = "";
 
-        public List<string> SelectedPhones
-        { get; set; }
+        public string RecipientType { get; set; }
+            = "Phone";
+
+        public List<string> SelectedPhones { get; set; }
             = new();
 
-        public List<UserModel> Users
-        { get; set; }
+        public List<long> SelectedChatIds { get; set; }
+            = new();
+
+        public List<UserModel> PhoneUsers { get; set; }
+            = new();
+
+        public List<UserChatIdViewModel> TelegramUsers { get; set; }
             = new();
     }
 }

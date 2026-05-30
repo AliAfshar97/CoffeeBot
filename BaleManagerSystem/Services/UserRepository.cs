@@ -1,4 +1,5 @@
-﻿using Dapper;
+﻿using BaleManagerSystem.Models.ViewModels;
+using Dapper;
 using Microsoft.Data.SqlClient;
 
 namespace BaleManagerSystem.Services
@@ -35,9 +36,9 @@ namespace BaleManagerSystem.Services
             await cmd.ExecuteNonQueryAsync();
         }
 
-        public async Task<List<long>> GetAllChatIds()
+        public async Task<List<UserChatIdViewModel>> GetAllChatIds()
         {
-            List<long> ids = new();
+            List<UserChatIdViewModel> users = new();
 
             using var conn = new SqlConnection(
                 _configuration.GetConnectionString("SaleBotManagerDB"));
@@ -45,17 +46,38 @@ namespace BaleManagerSystem.Services
             await conn.OpenAsync();
 
             var cmd = new SqlCommand(
-                "SELECT ChatId FROM BotUserTransactions",
+                @"SELECT ChatId,
+                 Username,
+                 FirstSeen
+                 FROM BotUserTransactions",
                 conn);
 
             using var reader = await cmd.ExecuteReaderAsync();
 
             while (await reader.ReadAsync())
             {
-                ids.Add(reader.GetInt64(0));
+                var user = new UserChatIdViewModel
+                {
+                    ChatId = reader.GetInt64(
+                        reader.GetOrdinal("ChatId")),
+
+                    Username = reader.IsDBNull(
+                        reader.GetOrdinal("Username"))
+                            ? string.Empty
+                            : reader.GetString(
+                                reader.GetOrdinal("Username")),
+
+                    FirstSeen = reader.IsDBNull(
+                        reader.GetOrdinal("FirstSeen"))
+                            ? DateTime.MinValue
+                            : reader.GetDateTime(
+                                reader.GetOrdinal("FirstSeen"))
+                };
+
+                users.Add(user);
             }
 
-            return ids;
+            return users;
         }
     }
 }

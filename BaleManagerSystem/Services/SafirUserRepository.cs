@@ -78,10 +78,11 @@ namespace BaleManagerSystem.Services
 
         // ================= LOG RESULT =================
         public async Task SaveLogAsync(
-            string phone,
             string message,
             bool success,
-            string? error = null)
+            string? error = null,
+            long? chatId = null,
+            string? phone = null)
         {
             using var conn =
                 new SqlConnection(ConnectionString);
@@ -92,6 +93,7 @@ namespace BaleManagerSystem.Services
             INSERT INTO BroadcastLogs
             (
                 PhoneNumber,
+                ChatId,
                 MessageText,
                 IsSuccess,
                 ErrorMessage
@@ -99,16 +101,26 @@ namespace BaleManagerSystem.Services
             VALUES
             (
                 @Phone,
+                @ChatId,
                 @Message,
                 @Success,
                 @Error
             )
         ", conn);
 
-            cmd.Parameters.AddWithValue("@Phone", phone);
+            cmd.Parameters.AddWithValue("@Phone",
+                (object?)phone ?? DBNull.Value);
+
+            cmd.Parameters.AddWithValue("@ChatId",
+                (object?)chatId ?? DBNull.Value);
+
             cmd.Parameters.AddWithValue("@Message", message);
+
             cmd.Parameters.AddWithValue("@Success", success);
-            cmd.Parameters.AddWithValue("@Error", error ?? "");
+
+            cmd.Parameters.AddWithValue("@Error",
+                (object?)error ?? DBNull.Value);
+
 
             await cmd.ExecuteNonQueryAsync();
         }

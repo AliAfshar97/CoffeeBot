@@ -46,43 +46,43 @@ namespace BaleManagerSystem.Controllers
 
             foreach (var phone in users)
             {
-                try
-                {
-                    var result =
-                        await _baleService.SendMessageAsync(
-                            phone,
-                            request.Message);
+                //try
+                //{
+                //    var result =
+                //        await _baleService.SendMessageAsync(
+                //            phone,
+                //            request.Message);
 
-                    if (result)
-                    {
-                        success++;
+                //    if (result)
+                //    {
+                //        success++;
 
-                        await _repo.SaveLogAsync(
-                            phone,
-                            request.Message,
-                            true);
-                    }
-                    else
-                    {
-                        failed++;
+                //        await _repo.SaveLogAsync(
+                //            phone,
+                //            request.Message,
+                //            true);
+                //    }
+                //    else
+                //    {
+                //        failed++;
 
-                        await _repo.SaveLogAsync(
-                            phone,
-                            request.Message,
-                            false,
-                            "Send failed");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    failed++;
+                //        await _repo.SaveLogAsync(
+                //            phone,
+                //            request.Message,
+                //            false,
+                //            "Send failed");
+                //    }
+                //}
+                //catch (Exception ex)
+                //{
+                //    failed++;
 
-                    await _repo.SaveLogAsync(
-                        phone,
-                        request.Message,
-                        false,
-                        ex.Message);
-                }
+                //    await _repo.SaveLogAsync(
+                //        phone,
+                //        request.Message,
+                //        false,
+                //        ex.Message);
+                //}
             }
 
             return Ok(new

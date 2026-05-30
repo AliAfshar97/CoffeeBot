@@ -113,11 +113,43 @@
 
                         <span class="badge bg-primary rounded-pill px-3 py-2">
 
-                            @Model.Users.Count Users
+                            @Model.PhoneUsers.Count Users
 
                         </span>
 
                     </div>
+
+                    <ul class="nav nav-pills mb-4" id="recipientTabs">
+
+                        <li class="nav-item">
+
+                            <button type="button"
+                                    class="nav-link active"
+                                    id="phoneTab">
+
+                                📱 Phone Users
+
+                            </button>
+
+                        </li>
+
+                        <li class="nav-item ms-2">
+
+                            <button type="button"
+                                    class="nav-link"
+                                    id="telegramTab">
+
+                                🤖 Telegram Users
+
+                            </button>
+
+                        </li>
+
+                    </ul>
+
+                    <input type="hidden"
+                           asp-for="RecipientType"
+                           id="recipientType" />
 
 
                     <!-- SEARCH -->
@@ -155,44 +187,88 @@
                     <!-- USER LIST -->
                     <div style="max-height:550px;overflow-y:auto;">
 
-                        @foreach (var user in Model.Users)
-                        {
-                            <div class="user-item border rounded-4 p-3 mb-3 shadow-sm">
+                        <!-- PHONE USERS -->
+                        <div id="phoneUsers">
 
-                                <div class="form-check d-flex align-items-center">
+                            @foreach (var user in Model.PhoneUsers)
+                            {
+                                <div class="user-item border rounded-4 p-3 mb-3 shadow-sm">
 
-                                    <input class="form-check-input user-checkbox me-3"
-                                           type="checkbox"
-                                           name="SelectedPhones"
-                                           value="@user.PhoneNumber" />
+                                    <div class="form-check d-flex align-items-center">
 
-                                    <div>
+                                        <input class="form-check-input user-checkbox me-3"
+                                               type="checkbox"
+                                               name="SelectedPhones"
+                                               value="@user.PhoneNumber" />
 
-                                        <div class="fw-bold">
+                                        <div>
 
-                                            @user.PhoneNumber
+                                            <div class="fw-bold">
+
+                                                @user.PhoneNumber
+
+                                            </div>
+
+                                            <div>
+
+                                                @user.Username
+
+                                            </div>
 
                                         </div>
-
-                                        <div class="fw-bold">
-
-                                            @user.Username
-
-                                        </div>
-
-                                        <small class="text-muted">
-
-                                            Registered:
-                                            @user.FirstSeen.ToString("yyyy/MM/dd")
-
-                                        </small>
 
                                     </div>
 
                                 </div>
+                            }
 
-                            </div>
-                        }
+                        </div>
+
+
+                        <!-- TELEGRAM USERS -->
+                        <div id="telegramUsers"
+                             style="display:none;">
+
+                            @foreach (var user in Model.TelegramUsers)
+                            {
+                                <div class="user-item border rounded-4 p-3 mb-3 shadow-sm">
+
+                                    <div class="form-check d-flex align-items-center">
+
+                                        <input class="form-check-input user-checkbox me-3"
+                                               type="checkbox"
+                                               name="SelectedChatIds"
+                                               value="@user.ChatId" />
+
+                                        <div>
+
+                                            <div class="fw-bold">
+
+                                                @user.Username
+
+                                            </div>
+
+                                            <div class="text-primary">
+
+                                                Chat ID: @user.ChatId
+
+                                            </div>
+
+                                            <small class="text-muted">
+
+                                                Registered:
+                                                @user.FirstSeen.ToString("yyyy/MM/dd")
+
+                                            </small>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            }
+
+                        </div>
 
                     </div>
 
@@ -253,6 +329,44 @@
 
         });
 
+                const phoneTab =
+            document.getElementById("phoneTab");
+
+        const telegramTab =
+            document.getElementById("telegramTab");
+
+        const phoneUsers =
+            document.getElementById("phoneUsers");
+
+        const telegramUsers =
+            document.getElementById("telegramUsers");
+
+        const recipientType =
+            document.getElementById("recipientType");
+
+        phoneTab.addEventListener("click", () => {
+
+            phoneTab.classList.add("active");
+            telegramTab.classList.remove("active");
+
+            phoneUsers.style.display = "";
+            telegramUsers.style.display = "none";
+
+            recipientType.value = "Phone";
+        });
+
+        telegramTab.addEventListener("click", () => {
+
+            telegramTab.classList.add("active");
+            phoneTab.classList.remove("active");
+
+            phoneUsers.style.display = "none";
+            telegramUsers.style.display = "";
+
+            recipientType.value = "Telegram";
+        });
+
+        recipientType.value = "Phone";
     </script>
 
 }

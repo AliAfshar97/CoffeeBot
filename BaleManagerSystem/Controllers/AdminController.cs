@@ -16,14 +16,18 @@ namespace BaleManagerSystem.Controllers
         private readonly SafirUserRepository _repo;
 
         private readonly BroadcastService _broadcast;
+
+        private readonly IUserRepository _userRepository;
         public AdminController(
             BaleMessageService baleService,
             SafirUserRepository repo,
-            BroadcastService broadcast)
+            BroadcastService broadcast,
+            IUserRepository userRepository)
         {
             _baleService = baleService;
             _repo = repo;
             _broadcast = broadcast;
+            _userRepository = userRepository;
         }
         // DASHBOARD
         public async Task<IActionResult> Dashboard()
@@ -109,69 +113,139 @@ namespace BaleManagerSystem.Controllers
             var vm =
              new BroadcastPageViewModel
              {
-                 Users =
-                     await _repo.GetUsersAsync()
+                 PhoneUsers =
+                     await _repo.GetUsersAsync(),
+
+                 TelegramUsers =
+                     await _userRepository.GetAllChatIds()
              };
 
             return View(vm);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Send(BroadcastPageViewModel vm)
+        public async Task<IActionResult> Send(
+            BroadcastPageViewModel vm)
         {
-            vm.Users =
+            vm.PhoneUsers =
                 await _repo.GetUsersAsync();
 
-            if (vm.SelectedPhones == null
-                || !vm.SelectedPhones.Any())
-            {
-                ViewBag.Error =
-                    "انتخاب یک شماره الزامی است.";
-
-                return View(vm);
-            }
+            vm.TelegramUsers =
+                await _userRepository.GetAllChatIds();
 
             int success = 0;
             int failed = 0;
 
-            foreach (var phone in vm.SelectedPhones)
+            if (vm.RecipientType == "Phone")
             {
-                try
+                if (vm.SelectedPhones == null ||
+                    !vm.SelectedPhones.Any())
                 {
-                    var result =
-                        await _baleService.SendMessageAsync(
-                            phone,
-                            vm.Message);
+                    ViewBag.Error =
+                        "حداقل یک شماره تلفن انتخاب کنید.";
 
-                    if (result)
+                    return View(vm);
+                }
+
+                foreach (var phone in vm.SelectedPhones)
+                {
+                    try
                     {
-                        success++;
+                        var result =
+                            await _baleService.SendMessageAsync(
+                                phone,
+                                vm.Message);
 
-                        await _repo.SaveLogAsync(
-                            phone,
+                        if (result)
+                        {
+                            success++;
+
+                            await _repo.SaveLogAsync(
                             vm.Message,
-                            true);
+                            true,
+                            null,
+                            null,
+                            phone);
+                        }
+                        else
+                        {
+                            failed++;
+
+                            await _repo.SaveLogAsync(
+                                
+                                vm.Message,
+                                false,
+                                "Send failed",
+                                null,
+                                phone);
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
                         failed++;
 
                         await _repo.SaveLogAsync(
-                            phone,
                             vm.Message,
                             false,
-                            "Send failed");
+                            ex.Message,
+                            null,
+                            phone);
                     }
                 }
-                catch (Exception ex)
+            }
+            else
+            {
+                if (vm.SelectedChatIds == null ||
+                    !vm.SelectedChatIds.Any())
                 {
-                    failed++;
+                    ViewBag.Error =
+                        "حداقل یک ChatId انتخاب کنید.";
 
-                    await _repo.SaveLogAsync(
-                        phone,
-                        vm.Message,
-                        false,
-                        ex.Message);
+                    return View(vm);
+                }
+
+                foreach (var chatid in vm.SelectedChatIds)
+                {
+                    try
+                    {
+                        var result = await _broadcast.SendToUsers(
+                             vm.SelectedChatIds,
+                             vm.Message);
+
+                        if (result.SuccessCount > 0)
+                        {
+                            success++;
+
+                            await _repo.SaveLogAsync(
+                            vm.Message,
+                            true,
+                            null,
+                            chatid,
+                            null);
+                        }
+                        else
+                        {
+                            failed++;
+
+                            await _repo.SaveLogAsync(
+                                vm.Message,
+                                false,
+                                "Send failed",
+                                chatid,
+                                null);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        failed++;
+
+                        await _repo.SaveLogAsync(
+                            vm.Message,
+                            false,
+                            ex.Message,
+                            chatid,
+                            null);
+                    }
                 }
             }
 
