@@ -5,6 +5,7 @@
         None,
         Name,
         Phone,
-        Company
+        Company,
+        ShortBrief
     }
 }

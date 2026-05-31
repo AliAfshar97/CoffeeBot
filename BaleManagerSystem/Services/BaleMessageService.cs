@@ -84,6 +84,66 @@ public class BaleMessageService
         }
     }
 
+
+    public async Task<bool> SendPhotoAsync(
+        long chatId,
+        string text,
+        string fileId)
+    {
+        try
+        {
+            var apiKey =
+                _config["BaleSettings:ApiKey"];
+
+            var botId =
+                Convert.ToInt32(
+                _config["BaleSettings:BotId"]);
+
+            var body = new
+            {
+                chat_id = chatId,
+
+                from_chat_id = botId,
+
+                photo = fileId
+            };
+
+            var json =
+                JsonSerializer.Serialize(body);
+
+            var request =
+                new HttpRequestMessage(
+                    HttpMethod.Post,
+                    $@"https://tapi.bale.ai/bot{_config["BaleSettings:Token"]}/sendPhoto");
+
+            //request.Headers.Add(
+            //    "api-access-key",
+            //    apiKey);
+
+            request.Content =
+                new StringContent(
+                    json,
+                    Encoding.UTF8,
+                    "application/json");
+
+            var response =
+                await _httpClient.SendAsync(request);
+
+            var result =
+                await response.Content.ReadAsStringAsync();
+
+            Console.WriteLine(result);
+
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return false;
+        }
+    }
+
+
     public async Task<string?> UploadFileAsync(
         IFormFile file)
     {

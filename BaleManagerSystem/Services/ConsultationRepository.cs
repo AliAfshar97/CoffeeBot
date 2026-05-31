@@ -21,15 +21,16 @@ namespace BaleManagerSystem.Services
 
             var cmd = new SqlCommand(@"
             INSERT INTO Consultations
-            (ChatId, FullName, PhoneNumber, Company, Category, CreatedAt)
+            (ChatId, FullName, PhoneNumber, Company, Category, ShortBrief, CreatedAt)
             VALUES
-            (@ChatId, @FullName, @PhoneNumber, @Company, @Category, GETDATE())
+            (@ChatId, @FullName, @PhoneNumber, @Company, @Category, @ShortBrief, GETDATE())
             ", conn);
 
             cmd.Parameters.AddWithValue("@ChatId", consultation.ChatId);
             cmd.Parameters.AddWithValue("@FullName", consultation.FullName);
             cmd.Parameters.AddWithValue("@PhoneNumber", consultation.PhoneNumber);
             cmd.Parameters.AddWithValue("@Company", consultation.Company);
+            cmd.Parameters.AddWithValue("@ShortBrief", consultation.ShortBrief);
             cmd.Parameters.AddWithValue("@Category", consultation.Category);
 
             await cmd.ExecuteNonQueryAsync();

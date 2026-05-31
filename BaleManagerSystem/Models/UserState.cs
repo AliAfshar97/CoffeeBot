@@ -10,6 +10,8 @@
 
         public string Company { get; set; } = string.Empty;
 
+        public string ShortBrief { get; set; } = string.Empty;
+
         public ConversationStep Step { get; set; }
     }
 }

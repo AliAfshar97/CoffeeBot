@@ -44,7 +44,7 @@ namespace BaleManagerSystem.Services
             }
         }
 
-        private async Task HandleMessage(
+        private async Task  HandleMessage(
             ITelegramBotClient botClient,
             Message msg)
         {
@@ -58,41 +58,34 @@ namespace BaleManagerSystem.Services
             {
                 var menu = new InlineKeyboardMarkup(new[]
                 {
-                new[]
-                {
-                    InlineKeyboardButton.WithCallbackData(
-                        "تهیه نرم‌افزار ERP سازمانی",
-                        "erp")
-                },
+                     new[]
+                     {
+                         InlineKeyboardButton.WithCallbackData(
+                             "راهکار های ERP سازمانی",
+                             "erp")
+                     },
 
-                new[]
-                {
-                    InlineKeyboardButton.WithCallbackData(
-                        "مهاجرت از سیستم ویندوزی به تحت وب",
-                        "web")
-                },
+                     new[]
+                     {
+                         InlineKeyboardButton.WithCallbackData(
+                             "مهاجرت به نسخه تحت وب",
+                             "migration")
+                     },
 
-                new[]
-                {
-                    InlineKeyboardButton.WithCallbackData(
-                        "خدمات شبکه و امنیت اطلاعات",
-                        "network")
-                },
+                     new[]
+                     {
+                         InlineKeyboardButton.WithCallbackData(
+                             "راهکارهای دورکاری TSPLUS",
+                             "TSPLUS")
+                     },
 
-                new[]
-                {
-                    InlineKeyboardButton.WithCallbackData(
-                        "خدمات مالی و مالیاتی",
-                        "finance")
-                },
-
-                new[]
-                {
-                    InlineKeyboardButton.WithCallbackData(
-                        "سایر موارد",
-                        "other")
-                }
-            });
+                     new[]
+                     {
+                         InlineKeyboardButton.WithCallbackData(
+                             "سایر موارد",
+                             "other")
+                     }
+                });
 
                 await botClient.SendMessage(
                     chatId,
@@ -107,6 +100,34 @@ namespace BaleManagerSystem.Services
             {
                 switch (state!.Step)
                 {
+                    case ConversationStep.ShortBrief:
+
+                        state.ShortBrief = text;
+
+                        InlineKeyboardMarkup menu = new InlineKeyboardMarkup();
+                        menu = new InlineKeyboardMarkup(new[]
+                        {
+                              new[]
+                              {
+                                  InlineKeyboardButton.WithCallbackData(
+                                      "تماس با کارشناسان حساب رایان",
+                                      "contact")
+                              },
+
+                              new[]
+                              {
+                                  InlineKeyboardButton.WithCallbackData(
+                                      "ثبت درخواست مشاوره",
+                                      "register")
+                              }
+                        });
+
+                        await botClient.SendMessage(
+                            chatId,
+                            "یکی از گزینه‌ها را انتخاب کنید :",
+                            replyMarkup: menu);
+
+                        return;
                     case ConversationStep.Name:
 
                         state.FullName = text;
@@ -151,6 +172,7 @@ namespace BaleManagerSystem.Services
                                 FullName = state.FullName,
                                 PhoneNumber = state.Phone,
                                 Company = state.Company,
+                                ShortBrief = state.ShortBrief,  
                                 Category = state.Category
                             });
 
@@ -185,34 +207,47 @@ namespace BaleManagerSystem.Services
             var data = cb.Data;
 
             // CATEGORY SELECTION
-            if (data is "erp" or "web" or "network" or "finance" or "other")
+            if (data is "erp" or "migration" or "TSPLUS" or "other")
             {
                 var state = _states.GetOrCreate(chatId);
 
                 state.Category = data!;
 
-                var menu = new InlineKeyboardMarkup(new[]
-                {
-                new[]
-                {
-                    InlineKeyboardButton.WithCallbackData(
-                        "تماس با کارشناسان حساب رایان",
-                        "contact")
-                },
+                InlineKeyboardMarkup menu = new InlineKeyboardMarkup();
 
-                new[]
+                if (data == "other")
                 {
-                    InlineKeyboardButton.WithCallbackData(
-                        "ثبت درخواست مشاوره",
-                        "register")
+                    state.Step = ConversationStep.ShortBrief;
+
+                    await botClient.SendMessage(
+                            chatId,
+                            "لطفا موضوع مورد نظر خود را به صورت کوتاه ارسال کنید تا درخواست شما دقیق تر ثبت شود.");
                 }
-            });
+                else
+                {
+                    menu = new InlineKeyboardMarkup(new[]
+                    {
+                        new[]
+                        {
+                            InlineKeyboardButton.WithCallbackData(
+                                "تماس با کارشناسان حساب رایان",
+                                "contact")
+                        },
 
-                await botClient.SendMessage(
-                    chatId,
-                    "یکی از گزینه‌ها را انتخاب کنید :",
-                    replyMarkup: menu);
+                        new[]
+                        {
+                            InlineKeyboardButton.WithCallbackData(
+                                "ثبت درخواست مشاوره",
+                                "register")
+                        }
+                    });
 
+                    await botClient.SendMessage(
+                        chatId,
+                        "یکی از گزینه‌ها را انتخاب کنید :",
+                        replyMarkup: menu);
+                }
+                  
                 await botClient.AnswerCallbackQuery(cb.Id);
 
                 return;
@@ -252,7 +287,7 @@ namespace BaleManagerSystem.Services
             Exception exception,
             CancellationToken ct)
         {
-            _logger.LogError(exception, "Telegram Bot Error");
+            _logger.LogError(exception, "Bale Bot Error");
 
             return Task.CompletedTask;
         }

@@ -1,5 +1,7 @@
 ﻿using BaleManagerSystem.Models;
+using System.IO;
 using Telegram.Bot;
+using Telegram.Bot.Types;
 
 namespace BaleManagerSystem.Services
 {
@@ -7,13 +9,16 @@ namespace BaleManagerSystem.Services
     {
         private readonly IUserRepository _users;
         private readonly ITelegramBotClient _bot;
+        private readonly BaleMessageService _baleMessageService;
 
         public BroadcastService(
             IUserRepository users,
-            ITelegramBotClient bot)
+            ITelegramBotClient bot,
+            BaleMessageService baleMessageService)
         {
             _users = users;
             _bot = bot;
+            _baleMessageService = baleMessageService;
         }
 
         public async Task<BroadcastResult> SendToUsers(
@@ -26,39 +31,54 @@ namespace BaleManagerSystem.Services
 
             var failedIds = new List<long>();
 
-            var tasks = chatIds.Select(async chatId =>
+            foreach (var chatId in chatIds)
             {
                 try
                 {
-                    var response =
-                        await _bot.SendMessage(chatId, message);
+                    Telegram.Bot.Types.Message response;
 
-                    if (response != null && response.MessageId > 0)
+                    if (fileId != null)
                     {
-                        Interlocked.Increment(ref success);
+                        var responseSend = await _baleMessageService.SendPhotoAsync(
+                            chatId: chatId,
+                            text: message,
+                            fileId : fileId);
+
+                        if (responseSend)
+                        {
+                            success++;
+                        }
+                        else
+                        {
+                            failed++;
+                            failedIds.Add(chatId);
+                        }
                     }
                     else
                     {
-                        Interlocked.Increment(ref failed);
+                        response =
+                            await _bot.SendMessage(
+                                chatId,
+                                message);
 
-                        lock (failedIds)
+                        if (response != null &&
+                        response.MessageId > 0)
                         {
+                            success++;
+                        }
+                        else
+                        {
+                            failed++;
                             failedIds.Add(chatId);
                         }
                     }
                 }
                 catch
                 {
-                    Interlocked.Increment(ref failed);
-
-                    lock (failedIds)
-                    {
-                        failedIds.Add(chatId);
-                    }
+                    failed++;
+                    failedIds.Add(chatId);
                 }
-            });
-
-            await Task.WhenAll(tasks);
+            }
 
             return new BroadcastResult
             {
