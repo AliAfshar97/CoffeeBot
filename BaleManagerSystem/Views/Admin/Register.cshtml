@@ -8,77 +8,201 @@
         ?? new List<BaleManagerSystem.Models.UserModel>();
 }
 
+<style>
+
+    .stats-card {
+        border-radius: 20px;
+        padding: 25px;
+        color: white;
+        box-shadow: 0 10px 25px rgba(0,0,0,.12);
+        transition: .3s;
+    }
+
+        .stats-card:hover {
+            transform: translateY(-4px);
+        }
+
+    .stats-number {
+        font-size: 40px;
+        font-weight: 800;
+        margin-top: 10px;
+    }
+
+    .bg-users {
+        background: linear-gradient(135deg,#2563eb,#3b82f6);
+    }
+
+    .bg-today {
+        background: linear-gradient(135deg,#059669,#10b981);
+    }
+
+    .bg-active {
+        background: linear-gradient(135deg,#7c3aed,#9333ea);
+    }
+
+    .card-modern {
+        border: none;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,.08);
+    }
+
+        .card-modern:hover {
+            transform: translateY(-2px);
+        }
+
+    .table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .form-control:focus {
+        box-shadow: none;
+        border-color: #0d6efd;
+    }
+
+    .user-avatar {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg,#2563eb,#3b82f6);
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: auto;
+    }
+
+</style>
+
+<!-- STATISTICS -->
+
+<div class="row g-4 mb-4">
+
+    <div class="col-md-4">
+
+        <div class="stats-card bg-users">
+
+            <div>Total Users</div>
+
+            <div class="stats-number">
+
+                @users.Count
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-4">
+
+        <div class="stats-card bg-today">
+
+            <div>Registered Today</div>
+
+            <div class="stats-number">
+
+                @users.Count(x => x.FirstSeen.Date == DateTime.Today)
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-4">
+
+        <div class="stats-card bg-active">
+
+            <div>Active Users</div>
+
+            <div class="stats-number">
+
+                @users.Count
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
 <div class="row g-4">
 
     <!-- REGISTER FORM -->
+
     <div class="col-lg-4">
 
-        <div class="card border-0 shadow-lg rounded-4">
+        <div class="card card-modern">
 
             <div class="card-body p-4">
 
                 <div class="text-center mb-4">
 
-                    <div class="mb-3">
+                    <div class="user-avatar mb-3">
 
-                        <div class="bg-primary bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center"
-                             style="width:80px;height:80px;">
-
-                            <i class="bi bi-person-plus-fill fs-1"></i>
-
-                        </div>
+                        <i class="bi bi-person-plus-fill fs-2"></i>
 
                     </div>
 
-                    <h2 class="fw-bold">
+                    <h3 class="fw-bold">
+
                         Register User
-                    </h2>
+
+                    </h3>
 
                     <p class="text-muted">
+
                         Add a new Bale user
+
                     </p>
 
                 </div>
 
                 <form method="post">
 
-                    <div class="mb-4">
+                    <div class="mb-3">
 
                         <label asp-for="PhoneNumber"
                                class="form-label fw-semibold">
                         </label>
 
                         <input asp-for="PhoneNumber"
-                               class="form-control form-control-lg rounded-3"
+                               class="form-control form-control-lg"
                                placeholder="989121234567" />
 
                         <div class="form-text">
 
                             شماره همراه باید با 98 شروع شود
-                            و شامل 0 اول نباشد.
+                            و بدون 0 باشد.
 
                         </div>
+
+                        <span asp-validation-for="PhoneNumber"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                    <div class="mb-4">
 
                         <label asp-for="Username"
                                class="form-label fw-semibold">
                         </label>
 
                         <input asp-for="Username"
-                               class="form-control form-control-lg rounded-3"
+                               class="form-control form-control-lg"
                                placeholder="نام و نام خانوادگی" />
 
-                        <span asp-validation-for="PhoneNumber"
-                              class="text-danger small">
-                        </span>
-
                         <span asp-validation-for="Username"
-                              class="text-danger small">
+                              class="text-danger">
                         </span>
 
                     </div>
 
                     <button type="submit"
-                            class="btn btn-primary btn-lg w-100 rounded-3 shadow-sm">
+                            class="btn btn-primary btn-lg w-100">
 
                         <i class="bi bi-check-circle-fill"></i>
                         Register User
@@ -89,7 +213,7 @@
 
                 @if (ViewBag.Message != null)
                 {
-                    <div class="alert alert-success mt-4 rounded-3 border-0">
+                    <div class="alert alert-success mt-4">
 
                         <i class="bi bi-check-circle-fill"></i>
 
@@ -104,11 +228,11 @@
 
     </div>
 
-
     <!-- USERS TABLE -->
+
     <div class="col-lg-8">
 
-        <div class="card border-0 shadow-lg rounded-4">
+        <div class="card card-modern">
 
             <div class="card-body p-4">
 
@@ -116,50 +240,53 @@
 
                     <div>
 
-                        <h2 class="fw-bold mb-1">
+                        <h3 class="fw-bold">
 
                             <i class="bi bi-people-fill text-primary"></i>
+
                             Registered Users
 
-                        </h2>
+                        </h3>
 
-                        <p class="text-muted mb-0">
+                        <div class="text-muted">
 
                             Total Users:
                             <strong>@users.Count</strong>
 
-                        </p>
+                        </div>
 
                     </div>
 
-                    <div>
+                    <span class="badge bg-primary fs-6">
 
-                        <span class="badge bg-primary rounded-pill px-3 py-2">
+                        Active
 
-                            Active Users
-
-                        </span>
-
-                    </div>
+                    </span>
 
                 </div>
 
-
                 <!-- SEARCH -->
-                <div class="mb-4">
+
+                <div class="input-group mb-4">
+
+                    <span class="input-group-text bg-white">
+
+                        <i class="bi bi-search"></i>
+
+                    </span>
 
                     <input type="text"
                            id="userSearch"
-                           class="form-control rounded-3"
-                           placeholder="Search phone number..." />
+                           class="form-control"
+                           placeholder="Search phone or username..." />
 
                 </div>
 
-
                 <!-- TABLE -->
+
                 <div class="table-responsive">
 
-                    <table class="table align-middle table-hover"
+                    <table class="table table-hover align-middle"
                            id="usersTable">
 
                         <thead class="table-light">
@@ -175,7 +302,10 @@
                                 <th>Create Date</th>
 
                                 <th>Status</th>
-                                <th width="120">Actions</th>
+
+                                <th width="130">
+                                    Actions
+                                </th>
 
                             </tr>
 
@@ -190,38 +320,26 @@
                                     <tr>
 
                                         <td>
-
                                             <strong>
                                                 #@item.Id
                                             </strong>
-
                                         </td>
 
                                         <td>
-
-                                            <div class="fw-semibold">
-                                                @item.PhoneNumber
-                                            </div>
-
+                                            @item.PhoneNumber
                                         </td>
 
                                         <td>
-
-                                            <div class="fw-semibold">
-                                                @item.Username
-                                            </div>
-
+                                            @item.Username
                                         </td>
 
                                         <td>
-
                                             @item.FirstSeen.ToString("yyyy/MM/dd HH:mm")
-
                                         </td>
 
                                         <td>
 
-                                            <span class="badge bg-success rounded-pill">
+                                            <span class="badge bg-success">
 
                                                 Active
 
@@ -241,9 +359,10 @@
                                                        value="@item.Id" />
 
                                                 <button type="submit"
-                                                        class="btn btn-sm btn-danger rounded-3">
+                                                        class="btn btn-outline-danger btn-sm">
 
                                                     <i class="bi bi-trash-fill"></i>
+                                                    Delete
 
                                                 </button>
 
@@ -258,12 +377,20 @@
                             {
                                 <tr>
 
-                                    <td colspan="5"
-                                        class="text-center py-5 text-muted">
+                                    <td colspan="6"
+                                        class="text-center py-5">
 
-                                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                                        <div class="display-5 text-muted">
 
-                                        کاربری یافت نشد.
+                                            <i class="bi bi-people"></i>
+
+                                        </div>
+
+                                        <div class="mt-3 text-muted">
+
+                                            No users found
+
+                                        </div>
 
                                     </td>
 
@@ -284,41 +411,36 @@
 
 </div>
 
-
 @section Scripts {
 
     <partial name="_ValidationScriptsPartial" />
 
     <script>
 
-        const searchInput =
-            document.getElementById("userSearch");
+        document
+            .getElementById("userSearch")
+            .addEventListener("keyup", function () {
 
-        searchInput.addEventListener("keyup", function () {
+                const filter =
+                    this.value.toLowerCase();
 
-            const filter =
-                this.value.toLowerCase();
+                const rows =
+                    document.querySelectorAll(
+                        "#usersTable tbody tr");
 
-            const rows =
-                document.querySelectorAll(
-                    "#usersTable tbody tr");
+                rows.forEach(row => {
 
-            rows.forEach(row => {
+                    const text =
+                        row.innerText.toLowerCase();
 
-                const phone =
-                    row.cells[1]?.innerText
-                        .toLowerCase();
+                    row.style.display =
+                        text.includes(filter)
+                            ? ""
+                            : "none";
 
-                if (phone?.includes(filter)) {
-                    row.style.display = "";
-                }
-                else {
-                    row.style.display = "none";
-                }
+                });
 
             });
-
-        });
 
     </script>
 
