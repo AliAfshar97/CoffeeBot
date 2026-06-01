@@ -177,7 +177,7 @@ namespace BaleManagerSystem.Services
                             });
 
                         long adminChatId = long.Parse(
-                            _configuration["BaleSettings:BotId"]!);
+                            _configuration["BaleSettings:AdminBotId"]!);
 
                         await botClient.SendMessage(
                             adminChatId,
