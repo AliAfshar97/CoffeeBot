@@ -18,16 +18,20 @@ namespace BaleManagerSystem.Controllers
         private readonly BroadcastService _broadcast;
 
         private readonly IUserRepository _userRepository;
+
+        private readonly IConsultationRepository _consultationRepository;
         public AdminController(
             BaleMessageService baleService,
             SafirUserRepository repo,
             BroadcastService broadcast,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            IConsultationRepository consultationRepository)
         {
             _baleService = baleService;
             _repo = repo;
             _broadcast = broadcast;
             _userRepository = userRepository;
+            _consultationRepository = consultationRepository;
         }
         // DASHBOARD
         public async Task<IActionResult> Dashboard()
@@ -40,6 +44,9 @@ namespace BaleManagerSystem.Controllers
 
             ViewBag.Failed =
                 await _repo.GetFailedLogsCountAsync();
+
+            ViewBag.TotalConsultations =
+                await _consultationRepository.GetConsultationCountAsync();
 
             return View();
         }
@@ -305,6 +312,16 @@ namespace BaleManagerSystem.Controllers
                 request.Message);
 
             return Ok();
+        }
+
+
+        public async Task<IActionResult> Consultations()
+        {
+            var data =
+                await _consultationRepository
+                    .GetConsultationsAsync();
+
+            return View(data);
         }
     }
 }

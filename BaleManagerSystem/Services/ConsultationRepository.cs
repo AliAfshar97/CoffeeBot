@@ -1,4 +1,5 @@
 ﻿using BaleManagerSystem.Models;
+using Dapper;
 using Microsoft.Data.SqlClient;
 
 namespace BaleManagerSystem.Services
@@ -34,6 +35,43 @@ namespace BaleManagerSystem.Services
             cmd.Parameters.AddWithValue("@Category", consultation.Category);
 
             await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task<List<Consultation>> GetConsultationsAsync()
+        {
+            using var conn = new SqlConnection(
+                _configuration.GetConnectionString(
+                    "SaleBotManagerDB"));
+
+            var sql = @"
+                        SELECT
+                            ChatId,
+                            FullName,
+                            PhoneNumber,
+                            Company,
+                            Category,
+                            ShortBrief,
+                            CreatedAt
+                        FROM Consultations
+                        ORDER BY CreatedAt DESC";
+
+            var result =
+                await conn.QueryAsync<Consultation>(sql);
+
+            return result.ToList();
+        }
+
+        public async Task<int> GetConsultationCountAsync()
+        {
+            using var conn = new SqlConnection(
+                _configuration.GetConnectionString(
+                    "SaleBotManagerDB"));
+
+            const string sql = @"
+            SELECT COUNT(*)
+            FROM Consultations";
+
+            return await conn.ExecuteScalarAsync<int>(sql);
         }
     }
 }
