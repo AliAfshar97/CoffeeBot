@@ -274,7 +274,7 @@ namespace BaleManagerSystem.Services
             {
                 await botClient.SendMessage(
                     chatId,
-                    "☎ 02187760\n📱 09101087760\n@hesabrayandm");
+                    "☎ 02187760 - داخلی 2\n📱 09101087760\n@hesabrayandm");
 
                 await botClient.AnswerCallbackQuery(cb.Id);
 
