@@ -136,7 +136,7 @@ namespace BaleManagerSystem.Services
 
                         await botClient.SendMessage(
                             chatId,
-                            "لطفا شماره تماس خود را وارد کنید :");
+                            "لطفا شماره همراه خود را ارسال نمایید (مثال : 09123456789) :");
 
                         return;
 
@@ -157,7 +157,7 @@ namespace BaleManagerSystem.Services
 
                         await botClient.SendMessage(
                             chatId,
-                            "نام شرکت خود را وارد کنید :");
+                            "نام سازمان یا شرکت خود را ارسال نمایید :");
 
                         return;
 
@@ -189,7 +189,8 @@ namespace BaleManagerSystem.Services
 
                         await botClient.SendMessage(
                             chatId,
-                            "درخواست شما ثبت شد ✅");
+                            "درخواست شما با موفقیت ثبت شد. ✅ \n" +
+                            "کارشناسان حساب رایان پارس به زودی با شما تماس خواهند گرفت.");
 
                         _states.Remove(chatId);
 
@@ -206,14 +207,14 @@ namespace BaleManagerSystem.Services
 
             var data = cb.Data;
 
+            InlineKeyboardMarkup menu = new InlineKeyboardMarkup();
+
             // CATEGORY SELECTION
             if (data is "erp" or "migration" or "TSPLUS" or "other")
             {
                 var state = _states.GetOrCreate(chatId);
 
                 state.Category = data!;
-
-                InlineKeyboardMarkup menu = new InlineKeyboardMarkup();
 
                 if (data == "other")
                 {
@@ -230,21 +231,21 @@ namespace BaleManagerSystem.Services
                         new[]
                         {
                             InlineKeyboardButton.WithCallbackData(
-                                "تماس با کارشناسان حساب رایان",
+                                "می خواهم تماس بگیرم",
                                 "contact")
                         },
 
                         new[]
                         {
                             InlineKeyboardButton.WithCallbackData(
-                                "ثبت درخواست مشاوره",
+                                "با من تماس بگیرید",
                                 "register")
                         }
                     });
 
                     await botClient.SendMessage(
                         chatId,
-                        "یکی از گزینه‌ها را انتخاب کنید :",
+                        "برای دریافت اطلاعات بیشتر و مشاوره لطفا یکی از گزینه های زیر را انتخاب کنید :",
                         replyMarkup: menu);
                 }
                   
@@ -262,7 +263,7 @@ namespace BaleManagerSystem.Services
 
                 await botClient.SendMessage(
                     chatId,
-                    "نام و نام خانوادگی خود را وارد کنید :");
+                    "لطفا نام و نام خانوادگی خود را وارد کنید :");
 
                 await botClient.AnswerCallbackQuery(cb.Id);
 
@@ -272,9 +273,22 @@ namespace BaleManagerSystem.Services
             // CONTACT
             if (data == "contact")
             {
+                menu = new InlineKeyboardMarkup(new[]
+                    {
+                        new[]
+                        {
+                            InlineKeyboardButton.WithCallbackData(
+                                "با من تماس بگیرید",
+                                "register")
+                        }
+                    });
+
                 await botClient.SendMessage(
                     chatId,
-                    "☎ 02187760 - داخلی 2\n📱 09101087760\n@hesabrayandm");
+                    "کارشناسان حساب رایان پارس در روز های کاری از ساعت 8 تا 17 از طریق شماره زیر آماده ارائه اطلاعات تکمیلی و پاسخ گویی به پرسش های شما هستند.\n" + 
+                    "☎ 02187760 - داخلی 2\n\n" + 
+                    "همچنین در صورتی که تمایل دارید کارشناسان ما با شما تماس بگیرند میتوانید از طریق گزینه با <<من تماس بگیرید>> درخواست خود را ثبت کنید.",
+                    replyMarkup: menu);
 
                 await botClient.AnswerCallbackQuery(cb.Id);
 
