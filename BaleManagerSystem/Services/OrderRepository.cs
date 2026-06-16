@@ -17,7 +17,7 @@ namespace BaleManagerSystem.Services
         private string ConnectionString =>
             _configuration.GetConnectionString("SaleBotManagerDB")!;
 
-        public async Task SaveOrderAsync(CoffeeOrder order)
+        public async Task<int> SaveOrderAsync(CoffeeOrder order)
         {
             using var conn = new SqlConnection(ConnectionString);
 
@@ -27,7 +27,8 @@ namespace BaleManagerSystem.Services
             INSERT INTO CoffeeOrders
             (ChatId, DisplayName, DrinkType, ShotCount, WithChocolate, PriceInToman, CreatedAt)
             VALUES
-            (@ChatId, @DisplayName, @DrinkType, @ShotCount, @WithChocolate, @PriceInToman, GETDATE())
+            (@ChatId, @DisplayName, @DrinkType, @ShotCount, @WithChocolate, @PriceInToman, GETDATE());
+            SELECT CAST(SCOPE_IDENTITY() AS INT);
             ", conn);
 
             cmd.Parameters.AddWithValue("@ChatId", order.ChatId);
@@ -37,7 +38,7 @@ namespace BaleManagerSystem.Services
             cmd.Parameters.AddWithValue("@WithChocolate", order.WithChocolate);
             cmd.Parameters.AddWithValue("@PriceInToman", order.PriceInToman);
 
-            await cmd.ExecuteNonQueryAsync();
+            return (int)(await cmd.ExecuteScalarAsync() ?? 0);
         }
 
         public async Task<List<CoffeeOrder>> GetOrdersAsync()

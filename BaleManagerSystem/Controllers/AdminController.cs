@@ -25,6 +25,10 @@ namespace BaleManagerSystem.Controllers
 
         private readonly PaymentReportExcelExporter _excelExporter;
 
+        private readonly IAccountRepository _accountRepository;
+
+        private readonly AccountBalancesExcelExporter _accountExcelExporter;
+
         public AdminController(
             BaleMessageService baleService,
             SafirUserRepository repo,
@@ -32,7 +36,9 @@ namespace BaleManagerSystem.Controllers
             IUserRepository userRepository,
             IOrderRepository orderRepository,
             ICoffeePriceRepository priceRepository,
-            PaymentReportExcelExporter excelExporter)
+            PaymentReportExcelExporter excelExporter,
+            IAccountRepository accountRepository,
+            AccountBalancesExcelExporter accountExcelExporter)
         {
             _baleService = baleService;
             _repo = repo;
@@ -41,6 +47,8 @@ namespace BaleManagerSystem.Controllers
             _orderRepository = orderRepository;
             _priceRepository = priceRepository;
             _excelExporter = excelExporter;
+            _accountRepository = accountRepository;
+            _accountExcelExporter = accountExcelExporter;
         }
         // DASHBOARD
         public async Task<IActionResult> Dashboard()
@@ -397,6 +405,111 @@ namespace BaleManagerSystem.Controllers
             }
 
             return $"PaymentReport_{DateTime.Now:yyyy-MM-dd}.xlsx";
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Accounts(DateTime? fromDate, DateTime? toDate)
+        {
+            var report = await _accountRepository.GetAccountsAsync(fromDate, toDate);
+            ViewBag.Users = await _userRepository.GetAllChatIds();
+            return View(report);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportAccounts(DateTime? fromDate, DateTime? toDate)
+        {
+            var report = await _accountRepository.GetAccountsAsync(fromDate, toDate);
+            var fileBytes = _accountExcelExporter.Export(report);
+            var fileName = BuildAccountFileName(fromDate, toDate);
+
+            return File(
+                fileBytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileName);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddCredit(AddCreditViewModel model)
+        {
+            if (model.Amount <= 0)
+            {
+                TempData["Error"] = "Credit amount must be greater than zero.";
+                return RedirectToAction(nameof(Accounts));
+            }
+
+            await _accountRepository.AddCreditAsync(
+                model.ChatId,
+                model.Amount,
+                model.Description ?? "Manual credit by admin",
+                null,
+                User.Identity?.Name ?? "admin");
+
+            TempData["Message"] = $"Credit of {model.Amount:N0} Toman added for {model.DisplayName}.";
+
+            return RedirectToAction(nameof(Accounts));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Receipts()
+        {
+            var pending = await _accountRepository.GetReceiptsAsync(ReceiptStatuses.Pending);
+            var processed = await _accountRepository.GetReceiptsAsync(null);
+
+            ViewBag.ProcessedReceipts = processed
+                .Where(r => r.Status != ReceiptStatuses.Pending)
+                .ToList();
+
+            return View(pending);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ApproveReceipt(ApproveReceiptViewModel model)
+        {
+            if (model.CreditAmount <= 0)
+            {
+                TempData["Error"] = "Credit amount must be greater than zero.";
+                return RedirectToAction(nameof(Receipts));
+            }
+
+            await _accountRepository.ApproveReceiptAsync(
+                model.ReceiptId,
+                model.CreditAmount,
+                model.AdminNote,
+                User.Identity?.Name ?? "admin");
+
+            TempData["Message"] = "Receipt approved and credit charged.";
+
+            return RedirectToAction(nameof(Receipts));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RejectReceipt(int receiptId, string? adminNote)
+        {
+            await _accountRepository.RejectReceiptAsync(receiptId, adminNote);
+
+            TempData["Message"] = "Receipt rejected.";
+
+            return RedirectToAction(nameof(Receipts));
+        }
+
+        private static string BuildAccountFileName(DateTime? fromDate, DateTime? toDate)
+        {
+            if (fromDate.HasValue && toDate.HasValue)
+            {
+                return $"AccountBalances_{fromDate:yyyy-MM-dd}_to_{toDate:yyyy-MM-dd}.xlsx";
+            }
+
+            if (fromDate.HasValue)
+            {
+                return $"AccountBalances_from_{fromDate:yyyy-MM-dd}.xlsx";
+            }
+
+            if (toDate.HasValue)
+            {
+                return $"AccountBalances_to_{toDate:yyyy-MM-dd}.xlsx";
+            }
+
+            return $"AccountBalances_{DateTime.Now:yyyy-MM-dd}.xlsx";
         }
     }
 }

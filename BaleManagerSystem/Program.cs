@@ -57,6 +57,12 @@ builder.Services.AddScoped<ICoffeePriceRepository, CoffeePriceRepository>();
 
 builder.Services.AddScoped<PaymentReportExcelExporter>();
 
+builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+
+builder.Services.AddScoped<AccountBalancesExcelExporter>();
+
+builder.Services.AddScoped<ReceiptFileService>();
+
 builder.Services.AddScoped<BaleUpdateHandler>();
 
 builder.Services.AddScoped<BroadcastService>();

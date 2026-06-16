@@ -3,6 +3,7 @@
     public enum ConversationStep
     {
         None,
-        Name
+        Name,
+        AwaitingReceiptPhoto
     }
 }

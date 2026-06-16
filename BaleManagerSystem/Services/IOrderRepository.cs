@@ -5,7 +5,7 @@ namespace BaleManagerSystem.Services
 {
     public interface IOrderRepository
     {
-        Task SaveOrderAsync(CoffeeOrder order);
+        Task<int> SaveOrderAsync(CoffeeOrder order);
 
         Task<List<CoffeeOrder>> GetOrdersAsync();
 
