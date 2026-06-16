@@ -129,7 +129,7 @@ namespace BaleManagerSystem.Services
                 if (string.IsNullOrWhiteSpace(displayName))
                     displayName = orderNames.GetValueOrDefault(chatId);
                 if (string.IsNullOrWhiteSpace(displayName))
-                    displayName = $"User {chatId}";
+                    displayName = $"کاربر {chatId}";
 
                 var totalDebit = userTransactions
                     .Where(t => t.TransactionType == AccountTransactionTypes.Debit)
@@ -279,7 +279,7 @@ namespace BaleManagerSystem.Services
                     {
                         ChatId = receipt.ChatId,
                         Amount = creditAmount,
-                        Description = $"Payment receipt #{receiptId} approved",
+                        Description = $"تایید رسید پرداخت #{receiptId}",
                         ReceiptId = receiptId,
                         CreatedBy = createdBy
                     },

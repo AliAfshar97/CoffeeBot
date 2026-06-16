@@ -1,8 +1,7 @@
-﻿<!-- Views/Admin/Logs.cshtml -->
-@model IEnumerable<dynamic>
+﻿@model IEnumerable<dynamic>
 
 @{
-    ViewData["Title"] = "Logs";
+    ViewData["Title"] = "گزارش ارسال";
 }
 
 <div class="card card-modern">
@@ -15,11 +14,11 @@
 
                 <h2 class="fw-bold">
                     <i class="bi bi-clock-history text-primary"></i>
-                    Broadcast Logs
+                    گزارش ارسال پیام
                 </h2>
 
                 <p class="text-muted mb-0">
-                    View all sent message history
+                    تاریخچه تمام پیام‌های ارسال‌شده
                 </p>
 
             </div>
@@ -33,10 +32,10 @@
                 <thead class="table-light">
 
                     <tr>
-                        <th>PhoneNumber</th>
-                        <th>MessageText</th>
-                        <th>Status</th>
-                        <th>Date</th>
+                        <th>شماره تلفن</th>
+                        <th>متن پیام</th>
+                        <th>وضعیت</th>
+                        <th>تاریخ</th>
                     </tr>
 
                 </thead>
@@ -58,13 +57,13 @@
                                 @if (item.IsSuccess)
                                 {
                                     <span class="badge bg-success">
-                                        Success
+                                        موفق
                                     </span>
                                 }
                                 else
                                 {
                                     <span class="badge bg-danger">
-                                        Failed
+                                        ناموفق
                                     </span>
                                 }
 

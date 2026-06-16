@@ -1,3 +1,4 @@
+using BaleManagerSystem.Localization;
 using BaleManagerSystem.Models.ViewModels;
 using ClosedXML.Excel;
 
@@ -22,33 +23,33 @@ namespace BaleManagerSystem.Services
             XLWorkbook workbook,
             AccountsPageViewModel report)
         {
-            var sheet = workbook.Worksheets.Add("Summary");
+            var sheet = workbook.Worksheets.Add("خلاصه");
 
-            sheet.Cell(1, 1).Value = "Account Balances Summary";
+            sheet.Cell(1, 1).Value = "خلاصه مانده حساب‌ها";
             sheet.Cell(1, 1).Style.Font.Bold = true;
             sheet.Cell(1, 1).Style.Font.FontSize = 14;
 
-            sheet.Cell(2, 1).Value = "From Date:";
-            sheet.Cell(2, 2).Value = report.FromDate?.ToString("yyyy-MM-dd") ?? "All";
+            sheet.Cell(2, 1).Value = "از تاریخ:";
+            sheet.Cell(2, 2).Value = report.FromDate?.ToString("yyyy-MM-dd") ?? PersianLabels.AllDates;
 
-            sheet.Cell(3, 1).Value = "To Date:";
-            sheet.Cell(3, 2).Value = report.ToDate?.ToString("yyyy-MM-dd") ?? "All";
+            sheet.Cell(3, 1).Value = "تا تاریخ:";
+            sheet.Cell(3, 2).Value = report.ToDate?.ToString("yyyy-MM-dd") ?? PersianLabels.AllDates;
 
-            sheet.Cell(4, 1).Value = "Total Debit (Toman):";
+            sheet.Cell(4, 1).Value = "جمع بدهکار (تومان):";
             sheet.Cell(4, 2).Value = report.GrandTotalDebit;
 
-            sheet.Cell(5, 1).Value = "Total Credit (Toman):";
+            sheet.Cell(5, 1).Value = "جمع بستانکار (تومان):";
             sheet.Cell(5, 2).Value = report.GrandTotalCredit;
 
-            sheet.Cell(6, 1).Value = "Total Remaining (Toman):";
+            sheet.Cell(6, 1).Value = "جمع مانده (تومان):";
             sheet.Cell(6, 2).Value = report.GrandTotalRemaining;
 
             var headerRow = 8;
-            sheet.Cell(headerRow, 1).Value = "Name";
-            sheet.Cell(headerRow, 2).Value = "Chat ID";
-            sheet.Cell(headerRow, 3).Value = "Debit (Toman)";
-            sheet.Cell(headerRow, 4).Value = "Credit (Toman)";
-            sheet.Cell(headerRow, 5).Value = "Remaining (Toman)";
+            sheet.Cell(headerRow, 1).Value = "نام";
+            sheet.Cell(headerRow, 2).Value = "شناسه چت";
+            sheet.Cell(headerRow, 3).Value = "بدهکار (تومان)";
+            sheet.Cell(headerRow, 4).Value = "بستانکار (تومان)";
+            sheet.Cell(headerRow, 5).Value = "مانده (تومان)";
 
             var headerRange = sheet.Range(headerRow, 1, headerRow, 5);
             headerRange.Style.Font.Bold = true;
@@ -73,15 +74,15 @@ namespace BaleManagerSystem.Services
             XLWorkbook workbook,
             AccountsPageViewModel report)
         {
-            var sheet = workbook.Worksheets.Add("Transactions");
+            var sheet = workbook.Worksheets.Add("تراکنش‌ها");
 
-            sheet.Cell(1, 1).Value = "Name";
-            sheet.Cell(1, 2).Value = "Chat ID";
-            sheet.Cell(1, 3).Value = "Type";
-            sheet.Cell(1, 4).Value = "Amount (Toman)";
-            sheet.Cell(1, 5).Value = "Description";
-            sheet.Cell(1, 6).Value = "Created By";
-            sheet.Cell(1, 7).Value = "Date";
+            sheet.Cell(1, 1).Value = "نام";
+            sheet.Cell(1, 2).Value = "شناسه چت";
+            sheet.Cell(1, 3).Value = "نوع";
+            sheet.Cell(1, 4).Value = "مبلغ (تومان)";
+            sheet.Cell(1, 5).Value = "توضیحات";
+            sheet.Cell(1, 6).Value = "ثبت توسط";
+            sheet.Cell(1, 7).Value = "تاریخ";
 
             var headerRange = sheet.Range(1, 1, 1, 7);
             headerRange.Style.Font.Bold = true;
@@ -95,7 +96,7 @@ namespace BaleManagerSystem.Services
                 {
                     sheet.Cell(row, 1).Value = person.DisplayName;
                     sheet.Cell(row, 2).Value = person.ChatId;
-                    sheet.Cell(row, 3).Value = entry.TransactionType;
+                    sheet.Cell(row, 3).Value = PersianLabels.TransactionType(entry.TransactionType);
                     sheet.Cell(row, 4).Value = entry.Amount;
                     sheet.Cell(row, 5).Value = entry.Description;
                     sheet.Cell(row, 6).Value = entry.CreatedBy;

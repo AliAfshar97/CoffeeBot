@@ -1,7 +1,7 @@
 @model BaleManagerSystem.Models.ViewModels.PaymentReportViewModel
 
 @{
-    ViewData["Title"] = "Payment Report";
+    ViewData["Title"] = "گزارش سفارش‌ها";
 }
 
 <div class="card shadow-lg border-0 rounded-4">
@@ -16,12 +16,12 @@
 
                     <i class="bi bi-receipt-cutoff text-primary"></i>
 
-                    Payment Report
+                    گزارش سفارش‌ها
 
                 </h2>
 
                 <p class="text-muted mb-0">
-                    Total amount each person should pay for their orders.
+                    مبلغی که هر نفر بابت سفارش‌هایش باید پرداخت کند.
                 </p>
 
             </div>
@@ -32,7 +32,7 @@
 
             <div class="col-md-4">
 
-                <label class="form-label">From Date</label>
+                <label class="form-label">از تاریخ</label>
 
                 <input type="date"
                        name="fromDate"
@@ -43,7 +43,7 @@
 
             <div class="col-md-4">
 
-                <label class="form-label">To Date</label>
+                <label class="form-label">تا تاریخ</label>
 
                 <input type="date"
                        name="toDate"
@@ -56,11 +56,11 @@
 
                 <button type="submit" class="btn btn-primary btn-modern me-2">
                     <i class="bi bi-funnel"></i>
-                    Filter
+                    فیلتر
                 </button>
 
                 <a asp-action="PaymentReport" class="btn btn-outline-secondary btn-modern me-2">
-                    Clear
+                    پاک کردن
                 </a>
 
                 <a asp-action="ExportPaymentReport"
@@ -68,7 +68,7 @@
                    asp-route-toDate="@Model.ToDate?.ToString("yyyy-MM-dd")"
                    class="btn btn-success btn-modern">
                     <i class="bi bi-file-earmark-excel"></i>
-                    Export Excel
+                    خروجی اکسل
                 </a>
 
             </div>
@@ -81,7 +81,7 @@
 
                 <div class="p-3 bg-light rounded-4">
 
-                    <div class="text-muted small">People</div>
+                    <div class="text-muted small">تعداد افراد</div>
 
                     <div class="fs-3 fw-bold">@Model.Summaries.Count</div>
 
@@ -93,7 +93,7 @@
 
                 <div class="p-3 bg-light rounded-4">
 
-                    <div class="text-muted small">Orders</div>
+                    <div class="text-muted small">تعداد سفارش</div>
 
                     <div class="fs-3 fw-bold">@Model.TotalOrders</div>
 
@@ -105,9 +105,9 @@
 
                 <div class="p-3 bg-primary text-white rounded-4">
 
-                    <div class="small opacity-75">Grand Total</div>
+                    <div class="small opacity-75">جمع کل</div>
 
-                    <div class="fs-3 fw-bold">@Model.GrandTotalToman.ToString("N0") Toman</div>
+                    <div class="fs-3 fw-bold">@Model.GrandTotalToman.ToString("N0") تومان</div>
 
                 </div>
 
@@ -128,18 +128,18 @@
                             <h5 class="fw-bold mb-1">@person.DisplayName</h5>
 
                             <div class="text-muted small">
-                                Chat ID: @person.ChatId |
-                                Orders: @person.OrderCount
+                                شناسه چت: @person.ChatId |
+                                تعداد سفارش: @person.OrderCount
                             </div>
 
                         </div>
 
                         <div class="text-end">
 
-                            <div class="text-muted small">Total to Pay</div>
+                            <div class="text-muted small">مبلغ قابل پرداخت</div>
 
                             <div class="fs-4 fw-bold text-primary">
-                                @person.TotalToman.ToString("N0") Toman
+                                @person.TotalToman.ToString("N0") تومان
                             </div>
 
                         </div>
@@ -154,15 +154,15 @@
 
                                 <tr>
 
-                                    <th>Drink</th>
+                                    <th>نوشیدنی</th>
 
-                                    <th>Shots</th>
+                                    <th>شات</th>
 
-                                    <th>Chocolate</th>
+                                    <th>شکلات</th>
 
-                                    <th>Price</th>
+                                    <th>مبلغ</th>
 
-                                    <th>Date</th>
+                                    <th>تاریخ</th>
 
                                 </tr>
 
@@ -174,11 +174,11 @@
                                 {
                                     <tr>
 
-                                        <td>@order.DrinkType</td>
+                                        <td>@PersianLabels.Drink(order.DrinkType)</td>
 
                                         <td>@order.ShotCount</td>
 
-                                        <td>@(order.WithChocolate ? "Yes" : "No")</td>
+                                        <td>@PersianLabels.YesNo(order.WithChocolate)</td>
 
                                         <td>@order.PriceInToman.ToString("N0")</td>
 
@@ -201,7 +201,7 @@
         @if (!Model.Summaries.Any())
         {
             <div class="alert alert-info mb-0">
-                No orders found for the selected date range.
+                در بازه انتخاب‌شده سفارشی یافت نشد.
             </div>
         }
 

@@ -1,7 +1,7 @@
 @model List<BaleManagerSystem.Models.PaymentReceipt>
 
 @{
-    ViewData["Title"] = "Payment Receipts";
+    ViewData["Title"] = "رسیدهای پرداخت";
     var processed = ViewBag.ProcessedReceipts as List<BaleManagerSystem.Models.PaymentReceipt> ?? new();
 }
 
@@ -17,12 +17,12 @@
 
                     <i class="bi bi-image text-primary"></i>
 
-                    Payment Receipts
+                    رسیدهای پرداخت
 
                 </h2>
 
                 <p class="text-muted mb-0">
-                    Review receipt photos from users and charge credit to their account.
+                    رسیدهای ارسالی کاربران را بررسی کنید و بستانکاری ثبت کنید.
                 </p>
 
             </div>
@@ -39,11 +39,11 @@
             <div class="alert alert-danger">@TempData["Error"]</div>
         }
 
-        <h4 class="fw-bold mb-3">Pending (@Model.Count)</h4>
+        <h4 class="fw-bold mb-3">در انتظار بررسی (@Model.Count)</h4>
 
         @if (!Model.Any())
         {
-            <div class="alert alert-info">No pending receipts.</div>
+            <div class="alert alert-info">رسید در انتظاری وجود ندارد.</div>
         }
 
         @foreach (var receipt in Model)
@@ -60,12 +60,12 @@
                             {
                                 <img src="@receipt.LocalFilePath"
                                      class="img-fluid rounded-4 border"
-                                     alt="Receipt #@receipt.Id" />
+                                     alt="رسید @receipt.Id" />
                             }
                             else
                             {
                                 <div class="p-4 bg-light rounded-4 text-muted">
-                                    Photo not saved locally.
+                                    تصویر به صورت محلی ذخیره نشده است.
                                 </div>
                             }
 
@@ -76,14 +76,14 @@
                             <h5 class="fw-bold">@receipt.DisplayName</h5>
 
                             <div class="text-muted mb-3">
-                                Receipt #@receipt.Id |
-                                Chat ID: @receipt.ChatId |
+                                رسید #@receipt.Id |
+                                شناسه چت: @receipt.ChatId |
                                 @receipt.CreatedAt
                             </div>
 
                             @if (!string.IsNullOrWhiteSpace(receipt.UserCaption))
                             {
-                                <p><strong>User caption:</strong> @receipt.UserCaption</p>
+                                <p><strong>توضیح کاربر:</strong> @receipt.UserCaption</p>
                             }
 
                             <form asp-action="ApproveReceipt" method="post" class="row g-3 mb-3">
@@ -92,7 +92,7 @@
 
                                 <div class="col-md-4">
 
-                                    <label class="form-label">Credit Amount (Toman)</label>
+                                    <label class="form-label">مبلغ بستانکاری (تومان)</label>
 
                                     <input type="number"
                                            name="CreditAmount"
@@ -104,19 +104,19 @@
 
                                 <div class="col-md-5">
 
-                                    <label class="form-label">Admin Note</label>
+                                    <label class="form-label">یادداشت مدیر</label>
 
                                     <input type="text"
                                            name="AdminNote"
                                            class="form-control"
-                                           placeholder="Optional note" />
+                                           placeholder="یادداشت اختیاری" />
 
                                 </div>
 
                                 <div class="col-md-3 d-flex align-items-end">
 
                                     <button type="submit" class="btn btn-success btn-modern w-100">
-                                        Approve & Charge
+                                        تایید و شارژ
                                     </button>
 
                                 </div>
@@ -130,10 +130,10 @@
                                 <input type="text"
                                        name="adminNote"
                                        class="form-control"
-                                       placeholder="Reject reason (optional)" />
+                                       placeholder="دلیل رد (اختیاری)" />
 
                                 <button type="submit" class="btn btn-outline-danger btn-modern">
-                                    Reject
+                                    رد
                                 </button>
 
                             </form>
@@ -149,7 +149,7 @@
 
         @if (processed.Any())
         {
-            <h4 class="fw-bold mb-3 mt-5">Processed</h4>
+            <h4 class="fw-bold mb-3 mt-5">بررسی‌شده</h4>
 
             <div class="table-responsive">
 
@@ -159,17 +159,17 @@
 
                         <tr>
 
-                            <th>ID</th>
+                            <th>شناسه</th>
 
-                            <th>Name</th>
+                            <th>نام</th>
 
-                            <th>Status</th>
+                            <th>وضعیت</th>
 
-                            <th>Credit</th>
+                            <th>بستانکاری</th>
 
-                            <th>Note</th>
+                            <th>یادداشت</th>
 
-                            <th>Date</th>
+                            <th>تاریخ</th>
 
                         </tr>
 
@@ -186,14 +186,9 @@
                                 <td>@receipt.DisplayName</td>
 
                                 <td>
-                                    @if (receipt.Status == "Approved")
-                                    {
-                                        <span class="badge bg-success">Approved</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-secondary">Rejected</span>
-                                    }
+                                    <span class="badge @(receipt.Status == "Approved" ? "bg-success" : "bg-secondary")">
+                                        @PersianLabels.ReceiptStatus(receipt.Status)
+                                    </span>
                                 </td>
 
                                 <td>@(receipt.CreditAmount?.ToString("N0") ?? "-")</td>

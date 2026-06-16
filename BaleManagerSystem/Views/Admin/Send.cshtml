@@ -1,7 +1,7 @@
 ﻿@model BaleManagerSystem.Models.ViewModels.BroadcastPageViewModel
 
 @{
-    ViewData["Title"] = "Broadcast Center";
+    ViewData["Title"] = "ارسال پیام";
 }
 
 <form method="post"
@@ -19,14 +19,14 @@
                     <h2 class="fw-bold mb-3">
 
                         <i class="bi bi-megaphone-fill text-primary"></i>
-                        Broadcast Center
+                        ارسال پیام
 
                     </h2>
 
                     <p class="text-muted mb-4">
 
-                        Send text messages and attachments
-                        to selected users.
+                        پیام متنی و فایل پیوست را
+                        برای کاربران انتخاب‌شده ارسال کنید.
 
                     </p>
 
@@ -35,14 +35,14 @@
 
                         <label class="form-label fw-semibold">
 
-                            Message
+                            متن پیام
 
                         </label>
 
                         <textarea asp-for="Message"
                                   class="form-control rounded-4"
                                   rows="8"
-                                  placeholder="Write your message here...">
+                                  placeholder="پیام خود را اینجا بنویسید...">
                         </textarea>
 
                     </div>
@@ -52,7 +52,7 @@
 
                         <label class="form-label fw-semibold">
 
-                            Attachment
+                            فایل پیوست
 
                         </label>
 
@@ -83,18 +83,18 @@
 
                             <h6 class="fw-bold">
 
-                                Broadcast Completed
+                                ارسال انجام شد
 
                             </h6>
 
                             <hr />
 
-                            Successful Sends:
+                            ارسال موفق:
                             <strong>@ViewBag.Success</strong>
 
                             <br />
 
-                            Failed Sends:
+                            ارسال ناموفق:
                             <strong>@ViewBag.Failed</strong>
 
                         </div>
@@ -105,7 +105,7 @@
 
                         <i class="bi bi-send-fill"></i>
 
-                        Send Broadcast
+                        ارسال پیام
 
                     </button>
 
@@ -129,13 +129,13 @@
                             <h2 class="fw-bold">
 
                                 <i class="bi bi-people-fill text-primary"></i>
-                                Contacts
+                                مخاطبان
 
                             </h2>
 
                             <p class="text-muted mb-0">
 
-                                Select recipients
+                                گیرندگان را انتخاب کنید
 
                             </p>
 
@@ -146,7 +146,7 @@
                             @(Model.PhoneUsers.Count +
                                                         Model.TelegramUsers.Count)
 
-                            Users
+                            کاربر
 
                         </span>
 
@@ -161,7 +161,7 @@
                                     class="nav-link active"
                                     id="phoneTab">
 
-                                📱 Phone Users
+                                📱 کاربران تلفنی
 
                             </button>
 
@@ -173,7 +173,7 @@
                                     class="nav-link"
                                     id="telegramTab">
 
-                                🤖 Bale Users
+                                🤖 کاربران بله
 
                             </button>
 
@@ -191,14 +191,14 @@
                         <input type="text"
                                id="userSearch"
                                class="form-control rounded-4"
-                               placeholder="Search users..." />
+                               placeholder="جستجوی کاربر..." />
 
                     </div>
 
                     <!-- SELECTED COUNT -->
                     <div class="alert alert-light border rounded-4">
 
-                        Selected Users:
+                        کاربران انتخاب‌شده:
 
                         <strong id="selectedCount">
 
@@ -220,7 +220,7 @@
                             <label class="form-check-label"
                                    for="selectAll">
 
-                                Select All
+                                انتخاب همه
 
                             </label>
 
@@ -292,14 +292,14 @@
 
                                             <div class="text-primary">
 
-                                                Chat ID:
+                                                شناسه چت:
                                                 @user.ChatId
 
                                             </div>
 
                                             <small class="text-muted">
 
-                                                Registered:
+                                                تاریخ ثبت:
                                                 @user.FirstSeen.ToString("yyyy/MM/dd")
 
                                             </small>

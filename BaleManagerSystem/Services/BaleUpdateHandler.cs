@@ -24,6 +24,14 @@ namespace BaleManagerSystem.Services
             ["milk"] = "Milk"
         };
 
+        private static readonly Dictionary<string, string> DrinkNamesPersian = new()
+        {
+            ["Espresso"] = "اسپرسو",
+            ["Latte"] = "لاته",
+            ["Cappuccino"] = "کاپوچینو",
+            ["Milk"] = "شیر"
+        };
+
         public BaleUpdateHandler(
             IUserRepository users,
             IOrderRepository orders,
@@ -76,7 +84,7 @@ namespace BaleManagerSystem.Services
 
                 await botClient.SendMessage(
                     chatId,
-                    "Welcome! What would you like to do?",
+                    "سلام! چه کاری انجام دهیم؟",
                     replyMarkup: BuildMainMenu());
 
                 return;
@@ -93,7 +101,7 @@ namespace BaleManagerSystem.Services
 
                 await botClient.SendMessage(
                     chatId,
-                    "Please send a photo of your payment receipt.");
+                    "لطفاً عکس رسید پرداخت خود را ارسال کنید.");
 
                 return;
             }
@@ -105,7 +113,7 @@ namespace BaleManagerSystem.Services
                 {
                     await botClient.SendMessage(
                         chatId,
-                        "Please enter your name:");
+                        "لطفاً نام خود را وارد کنید:");
 
                     return;
                 }
@@ -116,7 +124,7 @@ namespace BaleManagerSystem.Services
 
                 await botClient.SendMessage(
                     chatId,
-                    $"Thanks {text}! How many shots?",
+                    $"{text} عزیز، ممنون! چند شات می‌خواهید؟",
                     replyMarkup: BuildShotMenu());
 
                 return;
@@ -124,7 +132,7 @@ namespace BaleManagerSystem.Services
 
             await botClient.SendMessage(
                 chatId,
-                "Send /start to open the menu.");
+                "برای باز کردن منو /start را ارسال کنید.");
         }
 
         private async Task HandleReceiptPhotoAsync(
@@ -162,8 +170,8 @@ namespace BaleManagerSystem.Services
 
             await botClient.SendMessage(
                 chatId,
-                "Your payment receipt was received.\n" +
-                "The admin will review it and charge your account soon.");
+                "رسید پرداخت شما دریافت شد.\n" +
+                "مدیر به زودی آن را بررسی و حساب شما را شارژ می‌کند.");
 
             await NotifyAdminReceiptAsync(botClient, receiptId, displayName, chatId, photo.FileId, msg.Caption);
         }
@@ -181,7 +189,7 @@ namespace BaleManagerSystem.Services
             {
                 await botClient.SendMessage(
                     chatId,
-                    "Choose your drink:",
+                    "نوشیدنی مورد نظر را انتخاب کنید:",
                     replyMarkup: BuildDrinkMenu());
 
                 return;
@@ -196,8 +204,8 @@ namespace BaleManagerSystem.Services
 
                 await botClient.SendMessage(
                     chatId,
-                    "Please send a photo of your payment receipt.\n" +
-                    "You can add a caption with extra details if needed.");
+                    "لطفاً عکس رسید پرداخت خود را ارسال کنید.\n" +
+                    "در صورت نیاز می‌توانید توضیحات را در caption بنویسید.");
 
                 return;
             }
@@ -209,6 +217,7 @@ namespace BaleManagerSystem.Services
                 state.Step = ConversationStep.None;
 
                 var user = await _users.GetUserByChatIdAsync(chatId);
+                var drinkPersian = DrinkNamesPersian.GetValueOrDefault(state.DrinkType, state.DrinkType);
 
                 if (user == null || string.IsNullOrWhiteSpace(user.DisplayName))
                 {
@@ -216,7 +225,7 @@ namespace BaleManagerSystem.Services
 
                     await botClient.SendMessage(
                         chatId,
-                        "Welcome! Please enter your name (we will remember you for next orders):");
+                        "خوش آمدید! لطفاً نام خود را وارد کنید (برای سفارش‌های بعدی شما را می‌شناسیم):");
                 }
                 else
                 {
@@ -224,7 +233,7 @@ namespace BaleManagerSystem.Services
 
                     await botClient.SendMessage(
                         chatId,
-                        $"Hi {user.DisplayName}! How many shots for your {state.DrinkType}?",
+                        $"{user.DisplayName} عزیز! برای {drinkPersian} چند شات می‌خواهید؟",
                         replyMarkup: BuildShotMenu());
                 }
 
@@ -238,7 +247,7 @@ namespace BaleManagerSystem.Services
                 {
                     await botClient.SendMessage(
                         chatId,
-                        "Please send /start and choose Place Order.",
+                        "لطفاً /start را بزنید و «ثبت سفارش» را انتخاب کنید.",
                         replyMarkup: BuildMainMenu());
 
                     return;
@@ -248,7 +257,7 @@ namespace BaleManagerSystem.Services
 
                 await botClient.SendMessage(
                     chatId,
-                    "Would you like chocolate?",
+                    "شکلات هم می‌خواهید؟",
                     replyMarkup: BuildChocolateMenu());
 
                 return;
@@ -262,7 +271,7 @@ namespace BaleManagerSystem.Services
                 {
                     await botClient.SendMessage(
                         chatId,
-                        "Please send /start and choose Place Order.",
+                        "لطفاً /start را بزنید و «ثبت سفارش» را انتخاب کنید.",
                         replyMarkup: BuildMainMenu());
 
                     return;
@@ -274,13 +283,15 @@ namespace BaleManagerSystem.Services
                 if (string.IsNullOrWhiteSpace(displayName))
                 {
                     var user = await _users.GetUserByChatIdAsync(chatId);
-                    displayName = user?.DisplayName ?? "Unknown";
+                    displayName = user?.DisplayName ?? "نامشخص";
                 }
 
                 var price = await _prices.GetPriceAsync(
                     state.DrinkType,
                     state.ShotCount,
                     withChocolate) ?? 0;
+
+                var drinkPersian = DrinkNamesPersian.GetValueOrDefault(state.DrinkType, state.DrinkType);
 
                 var order = new CoffeeOrder
                 {
@@ -297,22 +308,22 @@ namespace BaleManagerSystem.Services
                 await _accounts.AddDebitAsync(
                     chatId,
                     price,
-                    $"Order: {state.DrinkType} {state.ShotCount} shot(s)",
+                    $"سفارش: {drinkPersian} {state.ShotCount} شات",
                     orderId);
 
-                var chocolateText = withChocolate ? "Yes" : "No";
+                var chocolateText = withChocolate ? "بله" : "خیر";
 
                 await botClient.SendMessage(
                     chatId,
-                    "Your order has been saved!\n\n" +
-                    $"Name: {displayName}\n" +
-                    $"Drink: {state.DrinkType}\n" +
-                    $"Shots: {state.ShotCount}\n" +
-                    $"Chocolate: {chocolateText}\n" +
-                    $"Price: {price:N0} Toman\n\n" +
-                    "Send /start to open the menu again.");
+                    "سفارش شما ثبت شد!\n\n" +
+                    $"نام: {displayName}\n" +
+                    $"نوشیدنی: {drinkPersian}\n" +
+                    $"شات: {state.ShotCount}\n" +
+                    $"شکلات: {chocolateText}\n" +
+                    $"مبلغ: {price:N0} تومان\n\n" +
+                    "برای منوی اصلی /start را ارسال کنید.");
 
-                await NotifyAdminAsync(botClient, order, chocolateText);
+                await NotifyAdminAsync(botClient, order, chocolateText, drinkPersian);
 
                 _states.Remove(chatId);
             }
@@ -337,16 +348,16 @@ namespace BaleManagerSystem.Services
 
                 await botClient.SendMessage(
                     adminChatId,
-                    "New payment receipt\n\n" +
-                    $"Receipt #: {receiptId}\n" +
-                    $"Name: {displayName}\n" +
-                    $"Chat ID: {chatId}\n" +
-                    $"Caption: {caption ?? "-"}");
+                    "رسید پرداخت جدید\n\n" +
+                    $"شماره رسید: {receiptId}\n" +
+                    $"نام: {displayName}\n" +
+                    $"شناسه چت: {chatId}\n" +
+                    $"توضیحات: {caption ?? "-"}");
 
                 await botClient.SendPhoto(
                     adminChatId,
                     InputFile.FromFileId(fileId),
-                    caption: $"Receipt #{receiptId} from {displayName}");
+                    caption: $"رسید #{receiptId} از {displayName}");
             }
             catch (Exception ex)
             {
@@ -357,7 +368,8 @@ namespace BaleManagerSystem.Services
         private async Task NotifyAdminAsync(
             ITelegramBotClient botClient,
             CoffeeOrder order,
-            string chocolateText)
+            string chocolateText,
+            string drinkPersian)
         {
             var adminChatIdSetting = _configuration["BaleSettings:AdminBotId"];
 
@@ -370,13 +382,13 @@ namespace BaleManagerSystem.Services
 
                 await botClient.SendMessage(
                     adminChatId,
-                    "New coffee order\n\n" +
-                    $"Name: {order.DisplayName}\n" +
-                    $"Chat ID: {order.ChatId}\n" +
-                    $"Drink: {order.DrinkType}\n" +
-                    $"Shots: {order.ShotCount}\n" +
-                    $"Chocolate: {chocolateText}\n" +
-                    $"Price: {order.PriceInToman:N0} Toman");
+                    "سفارش قهوه جدید\n\n" +
+                    $"نام: {order.DisplayName}\n" +
+                    $"شناسه چت: {order.ChatId}\n" +
+                    $"نوشیدنی: {drinkPersian}\n" +
+                    $"شات: {order.ShotCount}\n" +
+                    $"شکلات: {chocolateText}\n" +
+                    $"مبلغ: {order.PriceInToman:N0} تومان");
             }
             catch (Exception ex)
             {
@@ -390,11 +402,11 @@ namespace BaleManagerSystem.Services
             {
                 new[]
                 {
-                    InlineKeyboardButton.WithCallbackData("Place Order", "menu_order")
+                    InlineKeyboardButton.WithCallbackData("ثبت سفارش", "menu_order")
                 },
                 new[]
                 {
-                    InlineKeyboardButton.WithCallbackData("Send Payment Receipt", "menu_receipt")
+                    InlineKeyboardButton.WithCallbackData("ارسال رسید پرداخت", "menu_receipt")
                 }
             });
         }
@@ -405,13 +417,13 @@ namespace BaleManagerSystem.Services
             {
                 new[]
                 {
-                    InlineKeyboardButton.WithCallbackData("Espresso", "espresso"),
-                    InlineKeyboardButton.WithCallbackData("Latte", "latte")
+                    InlineKeyboardButton.WithCallbackData("اسپرسو", "espresso"),
+                    InlineKeyboardButton.WithCallbackData("لاته", "latte")
                 },
                 new[]
                 {
-                    InlineKeyboardButton.WithCallbackData("Cappuccino", "cappuccino"),
-                    InlineKeyboardButton.WithCallbackData("Milk", "milk")
+                    InlineKeyboardButton.WithCallbackData("کاپوچینو", "cappuccino"),
+                    InlineKeyboardButton.WithCallbackData("شیر", "milk")
                 }
             });
         }
@@ -422,8 +434,8 @@ namespace BaleManagerSystem.Services
             {
                 new[]
                 {
-                    InlineKeyboardButton.WithCallbackData("1 Shot", "shots_1"),
-                    InlineKeyboardButton.WithCallbackData("2 Shots", "shots_2")
+                    InlineKeyboardButton.WithCallbackData("۱ شات", "shots_1"),
+                    InlineKeyboardButton.WithCallbackData("۲ شات", "shots_2")
                 }
             });
         }
@@ -434,8 +446,8 @@ namespace BaleManagerSystem.Services
             {
                 new[]
                 {
-                    InlineKeyboardButton.WithCallbackData("With Chocolate", "choc_yes"),
-                    InlineKeyboardButton.WithCallbackData("No Chocolate", "choc_no")
+                    InlineKeyboardButton.WithCallbackData("با شکلات", "choc_yes"),
+                    InlineKeyboardButton.WithCallbackData("بدون شکلات", "choc_no")
                 }
             });
         }

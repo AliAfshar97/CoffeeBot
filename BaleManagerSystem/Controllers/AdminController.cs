@@ -228,7 +228,7 @@ namespace BaleManagerSystem.Controllers
                     !vm.SelectedChatIds.Any())
                 {
                     ViewBag.Error =
-                        "حداقل یک ChatId انتخاب کنید.";
+                        "حداقل یک شناسه چت انتخاب کنید.";
 
                     return View(vm);
                 }
@@ -351,14 +351,14 @@ namespace BaleManagerSystem.Controllers
             {
                 vm.Prices = await _priceRepository.GetAllAsync();
 
-                ViewBag.Message = "No prices to save.";
+                ViewBag.Message = "قیمتی برای ذخیره وجود ندارد.";
 
                 return View(vm);
             }
 
             await _priceRepository.UpdatePricesAsync(vm.Prices);
 
-            ViewBag.Message = "Prices updated successfully.";
+            ViewBag.Message = "قیمت‌ها با موفقیت ذخیره شد.";
 
             vm.Prices = await _priceRepository.GetAllAsync();
 
@@ -433,18 +433,18 @@ namespace BaleManagerSystem.Controllers
         {
             if (model.Amount <= 0)
             {
-                TempData["Error"] = "Credit amount must be greater than zero.";
+                TempData["Error"] = "مبلغ بستانکاری باید بیشتر از صفر باشد.";
                 return RedirectToAction(nameof(Accounts));
             }
 
             await _accountRepository.AddCreditAsync(
                 model.ChatId,
                 model.Amount,
-                model.Description ?? "Manual credit by admin",
+                model.Description ?? "شارژ دستی توسط مدیر",
                 null,
                 User.Identity?.Name ?? "admin");
 
-            TempData["Message"] = $"Credit of {model.Amount:N0} Toman added for {model.DisplayName}.";
+            TempData["Message"] = $"مبلغ {model.Amount:N0} تومان برای {model.DisplayName} به حساب اضافه شد.";
 
             return RedirectToAction(nameof(Accounts));
         }
@@ -467,7 +467,7 @@ namespace BaleManagerSystem.Controllers
         {
             if (model.CreditAmount <= 0)
             {
-                TempData["Error"] = "Credit amount must be greater than zero.";
+                TempData["Error"] = "مبلغ بستانکاری باید بیشتر از صفر باشد.";
                 return RedirectToAction(nameof(Receipts));
             }
 
@@ -477,7 +477,7 @@ namespace BaleManagerSystem.Controllers
                 model.AdminNote,
                 User.Identity?.Name ?? "admin");
 
-            TempData["Message"] = "Receipt approved and credit charged.";
+            TempData["Message"] = "رسید تایید شد و بستانکاری ثبت گردید.";
 
             return RedirectToAction(nameof(Receipts));
         }
@@ -487,7 +487,7 @@ namespace BaleManagerSystem.Controllers
         {
             await _accountRepository.RejectReceiptAsync(receiptId, adminNote);
 
-            TempData["Message"] = "Receipt rejected.";
+            TempData["Message"] = "رسید رد شد.";
 
             return RedirectToAction(nameof(Receipts));
         }
