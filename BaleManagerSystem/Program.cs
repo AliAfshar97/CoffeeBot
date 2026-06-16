@@ -51,6 +51,8 @@ builder.Services.AddHttpClient<BaleMessageService>();
 builder.Services.AddScoped<IConsultationRepository,
     ConsultationRepository>();
 
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+
 builder.Services.AddScoped<BaleUpdateHandler>();
 
 builder.Services.AddScoped<BroadcastService>();

@@ -3,9 +3,6 @@
     public enum ConversationStep
     {
         None,
-        Name,
-        Phone,
-        Company,
-        ShortBrief
+        Name
     }
 }

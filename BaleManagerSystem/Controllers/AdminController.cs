@@ -19,34 +19,29 @@ namespace BaleManagerSystem.Controllers
 
         private readonly IUserRepository _userRepository;
 
-        private readonly IConsultationRepository _consultationRepository;
+        private readonly IOrderRepository _orderRepository;
+
         public AdminController(
             BaleMessageService baleService,
             SafirUserRepository repo,
             BroadcastService broadcast,
             IUserRepository userRepository,
-            IConsultationRepository consultationRepository)
+            IOrderRepository orderRepository)
         {
             _baleService = baleService;
             _repo = repo;
             _broadcast = broadcast;
             _userRepository = userRepository;
-            _consultationRepository = consultationRepository;
+            _orderRepository = orderRepository;
         }
         // DASHBOARD
         public async Task<IActionResult> Dashboard()
         {
             ViewBag.TotalUsers =
-                await _repo.GetTotalUsersCountAsync();
+                await _userRepository.GetUserCountAsync();
 
-            ViewBag.Success =
-                await _repo.GetSuccessLogsCountAsync();
-
-            ViewBag.Failed =
-                await _repo.GetFailedLogsCountAsync();
-
-            ViewBag.TotalConsultations =
-                await _consultationRepository.GetConsultationCountAsync();
+            ViewBag.TotalOrders =
+                await _orderRepository.GetOrderCountAsync();
 
             return View();
         }
@@ -315,11 +310,9 @@ namespace BaleManagerSystem.Controllers
         }
 
 
-        public async Task<IActionResult> Consultations()
+        public async Task<IActionResult> Orders()
         {
-            var data =
-                await _consultationRepository
-                    .GetConsultationsAsync();
+            var data = await _orderRepository.GetOrdersAsync();
 
             return View(data);
         }

@@ -1,5 +1,5 @@
-﻿using BaleManagerSystem.Models.ViewModels;
-using Dapper;
+﻿using BaleManagerSystem.Models;
+using BaleManagerSystem.Models.ViewModels;
 using Microsoft.Data.SqlClient;
 
 namespace BaleManagerSystem.Services
@@ -29,9 +29,75 @@ namespace BaleManagerSystem.Services
             VALUES
             (@ChatId, @Username, GETDATE())
             ", conn);
-            
+
             cmd.Parameters.AddWithValue("@ChatId", chatId);
             cmd.Parameters.AddWithValue("@Username", username ?? "");
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task<int> GetUserCountAsync()
+        {
+            using var conn = new SqlConnection(
+                _configuration.GetConnectionString("SaleBotManagerDB"));
+
+            await conn.OpenAsync();
+
+            var cmd = new SqlCommand(
+                "SELECT COUNT(*) FROM BotUserTransactions",
+                conn);
+
+            return (int)(await cmd.ExecuteScalarAsync() ?? 0);
+        }
+
+        public async Task<ChatUser?> GetUserByChatIdAsync(long chatId)
+        {
+            using var conn = new SqlConnection(
+                _configuration.GetConnectionString("SaleBotManagerDB"));
+
+            await conn.OpenAsync();
+
+            var cmd = new SqlCommand(@"
+            SELECT ChatId, Username, DisplayName, FirstSeen
+            FROM BotUserTransactions
+            WHERE ChatId = @ChatId
+            ", conn);
+
+            cmd.Parameters.AddWithValue("@ChatId", chatId);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            if (!await reader.ReadAsync())
+                return null;
+
+            return new ChatUser
+            {
+                ChatId = reader.GetInt64(reader.GetOrdinal("ChatId")),
+                Username = reader.IsDBNull(reader.GetOrdinal("Username"))
+                    ? string.Empty
+                    : reader.GetString(reader.GetOrdinal("Username")),
+                DisplayName = reader.IsDBNull(reader.GetOrdinal("DisplayName"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("DisplayName")),
+                FirstSeen = reader.GetDateTime(reader.GetOrdinal("FirstSeen"))
+            };
+        }
+
+        public async Task UpdateDisplayNameAsync(long chatId, string displayName)
+        {
+            using var conn = new SqlConnection(
+                _configuration.GetConnectionString("SaleBotManagerDB"));
+
+            await conn.OpenAsync();
+
+            var cmd = new SqlCommand(@"
+            UPDATE BotUserTransactions
+            SET DisplayName = @DisplayName
+            WHERE ChatId = @ChatId
+            ", conn);
+
+            cmd.Parameters.AddWithValue("@ChatId", chatId);
+            cmd.Parameters.AddWithValue("@DisplayName", displayName);
 
             await cmd.ExecuteNonQueryAsync();
         }
@@ -48,6 +114,7 @@ namespace BaleManagerSystem.Services
             var cmd = new SqlCommand(
                 @"SELECT ChatId,
                  Username,
+                 DisplayName,
                  FirstSeen
                  FROM BotUserTransactions",
                 conn);
@@ -66,6 +133,12 @@ namespace BaleManagerSystem.Services
                             ? string.Empty
                             : reader.GetString(
                                 reader.GetOrdinal("Username")),
+
+                    DisplayName = reader.IsDBNull(
+                        reader.GetOrdinal("DisplayName"))
+                            ? string.Empty
+                            : reader.GetString(
+                                reader.GetOrdinal("DisplayName")),
 
                     FirstSeen = reader.IsDBNull(
                         reader.GetOrdinal("FirstSeen"))

@@ -63,7 +63,7 @@
         </h2>
 
         <p class="text-muted mb-0">
-            Bale Broadcast Management System
+            Coffee Order Bot Management
         </p>
 
     </div>
@@ -73,7 +73,7 @@
 <div class="row g-4 mb-5">
 
     <!-- TOTAL USERS -->
-    <div class="col-lg-3 col-md-6">
+    <div class="col-lg-6 col-md-6">
 
         <div class="dashboard-card users-card">
 
@@ -82,7 +82,7 @@
                 <div>
 
                     <div class="card-title-small">
-                        Total Users
+                        Bot Users
                     </div>
 
                     <div class="card-number">
@@ -103,70 +103,8 @@
 
     </div>
 
-    <!-- SUCCESS -->
-    <div class="col-lg-3 col-md-6">
-
-        <div class="dashboard-card success-card">
-
-            <div class="d-flex justify-content-between">
-
-                <div>
-
-                    <div class="card-title-small">
-                        Successful Sends
-                    </div>
-
-                    <div class="card-number">
-                        @ViewBag.Success
-                    </div>
-
-                </div>
-
-                <div class="card-icon">
-
-                    <i class="bi bi-check-circle-fill"></i>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- FAILED -->
-    <div class="col-lg-3 col-md-6">
-
-        <div class="dashboard-card failed-card">
-
-            <div class="d-flex justify-content-between">
-
-                <div>
-
-                    <div class="card-title-small">
-                        Failed Sends
-                    </div>
-
-                    <div class="card-number">
-                        @ViewBag.Failed
-                    </div>
-
-                </div>
-
-                <div class="card-icon">
-
-                    <i class="bi bi-x-circle-fill"></i>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- CONSULTATIONS -->
-    <div class="col-lg-3 col-md-6">
+    <!-- ORDERS -->
+    <div class="col-lg-6 col-md-6">
 
         <div class="dashboard-card consultation-card">
 
@@ -175,18 +113,18 @@
                 <div>
 
                     <div class="card-title-small">
-                        Consultations
+                        Coffee Orders
                     </div>
 
                     <div class="card-number">
-                        @ViewBag.TotalConsultations
+                        @ViewBag.TotalOrders
                     </div>
 
                 </div>
 
                 <div class="card-icon">
 
-                    <i class="bi bi-chat-left-text-fill"></i>
+                    <i class="bi bi-cup-hot-fill"></i>
 
                 </div>
 
@@ -204,15 +142,14 @@
 
         <h3 class="fw-bold mb-3">
 
-            Welcome to Bale Broadcast Manager
+            Welcome to Coffee Bot Manager
 
         </h3>
 
         <p class="text-muted fs-5">
 
-            Manage users, send broadcast messages,
-            monitor delivery statistics and review
-            consultation requests from one central dashboard.
+            View coffee orders from employees, manage bot users,
+            and send broadcast messages from one central dashboard.
 
         </p>
 

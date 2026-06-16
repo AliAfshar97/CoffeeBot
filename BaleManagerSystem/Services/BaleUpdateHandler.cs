@@ -1,5 +1,4 @@
 ﻿using BaleManagerSystem.Models;
-using System.Text.RegularExpressions;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -9,20 +8,28 @@ namespace BaleManagerSystem.Services
     public class BaleUpdateHandler
     {
         private readonly IUserRepository _users;
-        private readonly IConsultationRepository _consultations;
+        private readonly IOrderRepository _orders;
         private readonly UserStateService _states;
         private readonly IConfiguration _configuration;
         private readonly ILogger<BaleUpdateHandler> _logger;
 
+        private static readonly Dictionary<string, string> DrinkLabels = new()
+        {
+            ["espresso"] = "Espresso",
+            ["latte"] = "Latte",
+            ["cappuccino"] = "Cappuccino",
+            ["milk"] = "Milk"
+        };
+
         public BaleUpdateHandler(
             IUserRepository users,
-            IConsultationRepository consultations,
+            IOrderRepository orders,
             UserStateService states,
             IConfiguration configuration,
             ILogger<BaleUpdateHandler> logger)
         {
             _users = users;
-            _consultations = consultations;
+            _orders = orders;
             _states = states;
             _configuration = configuration;
             _logger = logger;
@@ -44,159 +51,54 @@ namespace BaleManagerSystem.Services
             }
         }
 
-        private async Task  HandleMessage(
+        private async Task HandleMessage(
             ITelegramBotClient botClient,
             Message msg)
         {
             var chatId = msg.Chat.Id;
-            var text = msg.Text ?? "";
+            var text = (msg.Text ?? "").Trim();
 
             await _users.SaveUser(chatId, msg.Chat.Username ?? "");
 
-            // START COMMAND
             if (text == "/start")
             {
-                var menu = new InlineKeyboardMarkup(new[]
-                {
-                     new[]
-                     {
-                         InlineKeyboardButton.WithCallbackData(
-                             "راهکار های ERP سازمانی",
-                             "erp")
-                     },
-
-                     new[]
-                     {
-                         InlineKeyboardButton.WithCallbackData(
-                             "مهاجرت به نسخه تحت وب",
-                             "migration")
-                     },
-
-                     new[]
-                     {
-                         InlineKeyboardButton.WithCallbackData(
-                             "راهکارهای دورکاری TSPLUS",
-                             "TSPLUS")
-                     },
-
-                     new[]
-                     {
-                         InlineKeyboardButton.WithCallbackData(
-                             "سایر موارد",
-                             "other")
-                     }
-                });
+                _states.Remove(chatId);
 
                 await botClient.SendMessage(
                     chatId,
-                    "موضوع مورد نظر را انتخاب کنید :",
-                    replyMarkup: menu);
+                    "Hello! Choose your drink to place an order:",
+                    replyMarkup: BuildDrinkMenu());
 
                 return;
             }
 
-            // HANDLE USER STATE
-            if (_states.TryGet(chatId, out var state))
+            if (_states.TryGet(chatId, out var state) &&
+                state!.Step == ConversationStep.Name)
             {
-                switch (state!.Step)
+                if (string.IsNullOrWhiteSpace(text))
                 {
-                    case ConversationStep.ShortBrief:
+                    await botClient.SendMessage(
+                        chatId,
+                        "Please enter your name:");
 
-                        state.ShortBrief = text;
-
-                        InlineKeyboardMarkup menu = new InlineKeyboardMarkup();
-                        menu = new InlineKeyboardMarkup(new[]
-                        {
-                              new[]
-                              {
-                                  InlineKeyboardButton.WithCallbackData(
-                                      "تماس با کارشناسان حساب رایان",
-                                      "contact")
-                              },
-
-                              new[]
-                              {
-                                  InlineKeyboardButton.WithCallbackData(
-                                      "ثبت درخواست مشاوره",
-                                      "register")
-                              }
-                        });
-
-                        await botClient.SendMessage(
-                            chatId,
-                            "یکی از گزینه‌ها را انتخاب کنید :",
-                            replyMarkup: menu);
-
-                        return;
-                    case ConversationStep.Name:
-
-                        state.FullName = text;
-
-                        state.Step = ConversationStep.Phone;
-
-                        await botClient.SendMessage(
-                            chatId,
-                            "لطفا شماره همراه خود را ارسال نمایید (مثال : 09123456789) :");
-
-                        return;
-
-                    case ConversationStep.Phone:
-
-                        if (!Regex.IsMatch(text, @"^09\d{9}$"))
-                        {
-                            await botClient.SendMessage(
-                                chatId,
-                                "شماره تلفن را با اعداد انگلیسی و به صورت صحیح وارد کنید.");
-
-                            return;
-                        }
-
-                        state.Phone = text;
-
-                        state.Step = ConversationStep.Company;
-
-                        await botClient.SendMessage(
-                            chatId,
-                            "نام سازمان یا شرکت خود را ارسال نمایید :");
-
-                        return;
-
-                    case ConversationStep.Company:
-
-                        state.Company = text;
-
-                        await _consultations.SaveConsultation(
-                            new Consultation
-                            {
-                                ChatId = chatId,
-                                FullName = state.FullName,
-                                PhoneNumber = state.Phone,
-                                Company = state.Company,
-                                ShortBrief = state.ShortBrief,  
-                                Category = state.Category
-                            });
-
-                        long adminChatId = long.Parse(
-                            _configuration["BaleSettings:AdminBotId"]!);
-
-                        await botClient.SendMessage(
-                            adminChatId,
-                            $"📥 پیام جدید \n\n" +
-                            $"نام : {state.FullName}\n" +
-                            $"شماره تلفن : {state.Phone}\n" +
-                            $"نام شرکت: {state.Company}\n" +
-                            $"دسته بندی: {state.Category}");
-
-                        await botClient.SendMessage(
-                            chatId,
-                            "درخواست شما با موفقیت ثبت شد. ✅ \n" +
-                            "کارشناسان حساب رایان پارس به زودی با شما تماس خواهند گرفت.");
-
-                        _states.Remove(chatId);
-
-                        return;
+                    return;
                 }
+
+                state.DisplayName = text;
+                await _users.UpdateDisplayNameAsync(chatId, text);
+                state.Step = ConversationStep.None;
+
+                await botClient.SendMessage(
+                    chatId,
+                    $"Thanks {text}! How many shots?",
+                    replyMarkup: BuildShotMenu());
+
+                return;
             }
+
+            await botClient.SendMessage(
+                chatId,
+                "Send /start to place a coffee order.");
         }
 
         private async Task HandleCallback(
@@ -204,96 +106,180 @@ namespace BaleManagerSystem.Services
             CallbackQuery cb)
         {
             var chatId = cb.Message!.Chat.Id;
+            var data = cb.Data ?? "";
 
-            var data = cb.Data;
+            await botClient.AnswerCallbackQuery(cb.Id);
 
-            InlineKeyboardMarkup menu = new InlineKeyboardMarkup();
-
-            // CATEGORY SELECTION
-            if (data is "erp" or "migration" or "TSPLUS" or "other")
+            if (DrinkLabels.ContainsKey(data))
             {
                 var state = _states.GetOrCreate(chatId);
+                state.DrinkType = DrinkLabels[data];
 
-                state.Category = data!;
+                var user = await _users.GetUserByChatIdAsync(chatId);
 
-                if (data == "other")
+                if (user == null || string.IsNullOrWhiteSpace(user.DisplayName))
                 {
-                    state.Step = ConversationStep.ShortBrief;
-
-                    await botClient.SendMessage(
-                            chatId,
-                            "لطفا موضوع مورد نظر خود را به صورت کوتاه ارسال کنید تا درخواست شما دقیق تر ثبت شود.");
-                }
-                else
-                {
-                    menu = new InlineKeyboardMarkup(new[]
-                    {
-                        new[]
-                        {
-                            InlineKeyboardButton.WithCallbackData(
-                                "می خواهم تماس بگیرم",
-                                "contact")
-                        },
-
-                        new[]
-                        {
-                            InlineKeyboardButton.WithCallbackData(
-                                "با من تماس بگیرید",
-                                "register")
-                        }
-                    });
+                    state.Step = ConversationStep.Name;
 
                     await botClient.SendMessage(
                         chatId,
-                        "برای دریافت اطلاعات بیشتر و مشاوره لطفا یکی از گزینه های زیر را انتخاب کنید :",
-                        replyMarkup: menu);
+                        "Welcome! Please enter your name (we will remember you for next orders):");
                 }
-                  
-                await botClient.AnswerCallbackQuery(cb.Id);
+                else
+                {
+                    state.DisplayName = user.DisplayName;
+
+                    await botClient.SendMessage(
+                        chatId,
+                        $"Hi {user.DisplayName}! How many shots for your {state.DrinkType}?",
+                        replyMarkup: BuildShotMenu());
+                }
 
                 return;
             }
 
-            // REGISTER CONSULTATION
-            if (data == "register")
+            if (data is "shots_1" or "shots_2")
             {
-                var state = _states.GetOrCreate(chatId);
+                if (!_states.TryGet(chatId, out var state) ||
+                    string.IsNullOrEmpty(state!.DrinkType))
+                {
+                    await botClient.SendMessage(
+                        chatId,
+                        "Please send /start to begin a new order.",
+                        replyMarkup: BuildDrinkMenu());
 
-                state.Step = ConversationStep.Name;
+                    return;
+                }
+
+                state.ShotCount = data == "shots_1" ? (byte)1 : (byte)2;
 
                 await botClient.SendMessage(
                     chatId,
-                    "لطفا نام و نام خانوادگی خود را وارد کنید :");
-
-                await botClient.AnswerCallbackQuery(cb.Id);
+                    "Would you like chocolate?",
+                    replyMarkup: BuildChocolateMenu());
 
                 return;
             }
 
-            // CONTACT
-            if (data == "contact")
+            if (data is "choc_yes" or "choc_no")
             {
-                menu = new InlineKeyboardMarkup(new[]
-                    {
-                        new[]
-                        {
-                            InlineKeyboardButton.WithCallbackData(
-                                "با من تماس بگیرید",
-                                "register")
-                        }
-                    });
+                if (!_states.TryGet(chatId, out var state) ||
+                    string.IsNullOrEmpty(state!.DrinkType) ||
+                    state.ShotCount == 0)
+                {
+                    await botClient.SendMessage(
+                        chatId,
+                        "Please send /start to begin a new order.",
+                        replyMarkup: BuildDrinkMenu());
+
+                    return;
+                }
+
+                var withChocolate = data == "choc_yes";
+                var displayName = state.DisplayName;
+
+                if (string.IsNullOrWhiteSpace(displayName))
+                {
+                    var user = await _users.GetUserByChatIdAsync(chatId);
+                    displayName = user?.DisplayName ?? "Unknown";
+                }
+
+                var order = new CoffeeOrder
+                {
+                    ChatId = chatId,
+                    DisplayName = displayName,
+                    DrinkType = state.DrinkType,
+                    ShotCount = state.ShotCount,
+                    WithChocolate = withChocolate
+                };
+
+                await _orders.SaveOrderAsync(order);
+
+                var chocolateText = withChocolate ? "Yes" : "No";
 
                 await botClient.SendMessage(
                     chatId,
-                    "کارشناسان حساب رایان پارس در روز های کاری از ساعت 8 تا 17 از طریق شماره زیر آماده ارائه اطلاعات تکمیلی و پاسخ گویی به پرسش های شما هستند.\n" + 
-                    "☎ 02187760 - داخلی 2\n\n" + 
-                    "همچنین در صورتی که تمایل دارید کارشناسان ما با شما تماس بگیرند میتوانید از طریق گزینه با <<من تماس بگیرید>> درخواست خود را ثبت کنید.",
-                    replyMarkup: menu);
+                    "Your order has been saved!\n\n" +
+                    $"Name: {displayName}\n" +
+                    $"Drink: {state.DrinkType}\n" +
+                    $"Shots: {state.ShotCount}\n" +
+                    $"Chocolate: {chocolateText}\n\n" +
+                    "Send /start to place another order.");
 
-                await botClient.AnswerCallbackQuery(cb.Id);
+                await NotifyAdminAsync(botClient, order, chocolateText);
 
-                return;
+                _states.Remove(chatId);
             }
+        }
+
+        private async Task NotifyAdminAsync(
+            ITelegramBotClient botClient,
+            CoffeeOrder order,
+            string chocolateText)
+        {
+            var adminChatIdSetting = _configuration["BaleSettings:AdminBotId"];
+
+            if (string.IsNullOrEmpty(adminChatIdSetting))
+                return;
+
+            try
+            {
+                var adminChatId = long.Parse(adminChatIdSetting);
+
+                await botClient.SendMessage(
+                    adminChatId,
+                    "New coffee order\n\n" +
+                    $"Name: {order.DisplayName}\n" +
+                    $"Chat ID: {order.ChatId}\n" +
+                    $"Drink: {order.DrinkType}\n" +
+                    $"Shots: {order.ShotCount}\n" +
+                    $"Chocolate: {chocolateText}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to notify admin about new order");
+            }
+        }
+
+        private static InlineKeyboardMarkup BuildDrinkMenu()
+        {
+            return new InlineKeyboardMarkup(new[]
+            {
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("Espresso", "espresso"),
+                    InlineKeyboardButton.WithCallbackData("Latte", "latte")
+                },
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("Cappuccino", "cappuccino"),
+                    InlineKeyboardButton.WithCallbackData("Milk", "milk")
+                }
+            });
+        }
+
+        private static InlineKeyboardMarkup BuildShotMenu()
+        {
+            return new InlineKeyboardMarkup(new[]
+            {
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("1 Shot", "shots_1"),
+                    InlineKeyboardButton.WithCallbackData("2 Shots", "shots_2")
+                }
+            });
+        }
+
+        private static InlineKeyboardMarkup BuildChocolateMenu()
+        {
+            return new InlineKeyboardMarkup(new[]
+            {
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("With Chocolate", "choc_yes"),
+                    InlineKeyboardButton.WithCallbackData("No Chocolate", "choc_no")
+                }
+            });
         }
 
         public Task HandleErrorAsync(
