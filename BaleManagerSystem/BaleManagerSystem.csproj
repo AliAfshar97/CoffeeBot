@@ -4,6 +4,9 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <CompressionEnabled>false</CompressionEnabled>
+    <!-- SDK 9.0.300 caches wwwroot paths with mixed drive-letter casing (e:\ vs E:\), causing duplicate asset conflicts -->
+    <StaticWebAssetsCacheDefineStaticWebAssetsEnabled>false</StaticWebAssetsCacheDefineStaticWebAssetsEnabled>
   </PropertyGroup>
 
   <ItemGroup>

@@ -57,15 +57,48 @@ namespace BaleManagerSystem.Services
             Update update,
             CancellationToken ct)
         {
-            if (update.Message != null)
+            try
             {
-                await HandleMessage(botClient, update.Message, ct);
-            }
+                if (update.Message != null)
+                {
+                    await HandleMessage(botClient, update.Message, ct);
+                }
 
-            if (update.CallbackQuery != null)
-            {
-                await HandleCallback(botClient, update.CallbackQuery);
+                if (update.CallbackQuery != null)
+                {
+                    await HandleCallback(botClient, update.CallbackQuery, ct);
+                }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to handle Bale update {UpdateId}", update.Id);
+
+                if (update.Message?.Chat.Id is long chatId)
+                {
+                    try
+                    {
+                        await botClient.SendMessage(
+                            chatId,
+                            "خطایی رخ داد. لطفاً دوباره /start را ارسال کنید.",
+                            cancellationToken: ct);
+                    }
+                    catch (Exception sendEx)
+                    {
+                        _logger.LogError(sendEx, "Failed to send error message to chat {ChatId}", chatId);
+                    }
+                }
+            }
+        }
+
+        private static bool IsStartCommand(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return false;
+
+            var command = text.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries)[0];
+
+            return command.Equals("/start", StringComparison.OrdinalIgnoreCase) ||
+                   command.StartsWith("/start@", StringComparison.OrdinalIgnoreCase);
         }
 
         private async Task HandleMessage(
@@ -76,19 +109,22 @@ namespace BaleManagerSystem.Services
             var chatId = msg.Chat.Id;
             var text = (msg.Text ?? "").Trim();
 
-            await _users.SaveUser(chatId, msg.Chat.Username ?? "");
-
-            if (text == "/start")
+            if (IsStartCommand(text))
             {
                 _states.Remove(chatId);
+
+                await TrySaveUserAsync(chatId, msg.Chat.Username ?? "", ct);
 
                 await botClient.SendMessage(
                     chatId,
                     "سلام! چه کاری انجام دهیم؟",
-                    replyMarkup: BuildMainMenu());
+                    replyMarkup: BuildMainMenu(),
+                    cancellationToken: ct);
 
                 return;
             }
+
+            await TrySaveUserAsync(chatId, msg.Chat.Username ?? "", ct);
 
             if (_states.TryGet(chatId, out var state) &&
                 state!.Step == ConversationStep.AwaitingReceiptPhoto)
@@ -176,21 +212,35 @@ namespace BaleManagerSystem.Services
             await NotifyAdminReceiptAsync(botClient, receiptId, displayName, chatId, photo.FileId, msg.Caption);
         }
 
+        private async Task TrySaveUserAsync(long chatId, string username, CancellationToken ct)
+        {
+            try
+            {
+                await _users.SaveUser(chatId, username);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not save user {ChatId} to database", chatId);
+            }
+        }
+
         private async Task HandleCallback(
             ITelegramBotClient botClient,
-            CallbackQuery cb)
+            CallbackQuery cb,
+            CancellationToken ct)
         {
             var chatId = cb.Message!.Chat.Id;
             var data = cb.Data ?? "";
 
-            await botClient.AnswerCallbackQuery(cb.Id);
+            await botClient.AnswerCallbackQuery(cb.Id, cancellationToken: ct);
 
             if (data == "menu_order")
             {
                 await botClient.SendMessage(
                     chatId,
                     "نوشیدنی مورد نظر را انتخاب کنید:",
-                    replyMarkup: BuildDrinkMenu());
+                    replyMarkup: BuildDrinkMenu(),
+                    cancellationToken: ct);
 
                 return;
             }
@@ -205,7 +255,8 @@ namespace BaleManagerSystem.Services
                 await botClient.SendMessage(
                     chatId,
                     "لطفاً عکس رسید پرداخت خود را ارسال کنید.\n" +
-                    "در صورت نیاز می‌توانید توضیحات را در caption بنویسید.");
+                    "در صورت نیاز می‌توانید توضیحات را در caption بنویسید.",
+                    cancellationToken: ct);
 
                 return;
             }
