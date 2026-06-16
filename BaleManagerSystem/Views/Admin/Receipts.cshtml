@@ -56,18 +56,27 @@
 
                         <div class="col-md-4">
 
-                            @if (!string.IsNullOrEmpty(receipt.LocalFilePath))
-                            {
-                                <img src="@receipt.LocalFilePath"
-                                     class="img-fluid rounded-4 border"
-                                     alt="رسید @receipt.Id" />
-                            }
-                            else
-                            {
-                                <div class="p-4 bg-light rounded-4 text-muted">
-                                    تصویر به صورت محلی ذخیره نشده است.
-                                </div>
-                            }
+                            <a href="@Url.Action("ReceiptImage", "Admin", new { id = receipt.Id })"
+                               target="_blank"
+                               class="d-block text-decoration-none">
+
+                                <img src="@Url.Action("ReceiptImage", "Admin", new { id = receipt.Id })"
+                                     class="img-fluid rounded-4 border shadow-sm receipt-image"
+                                     alt="رسید @receipt.Id"
+                                     loading="lazy"
+                                     onerror="this.closest('a').outerHTML='<div class=\'p-4 bg-light rounded-4 text-muted text-center\'>نمایش تصویر ممکن نیست</div>';" />
+
+                            </a>
+
+                            <div class="text-center mt-2">
+
+                                <a href="@Url.Action("ReceiptImage", "Admin", new { id = receipt.Id })"
+                                   target="_blank"
+                                   class="small text-primary">
+                                    باز کردن تصویر در اندازه اصلی
+                                </a>
+
+                            </div>
 
                         </div>
 

@@ -21,9 +21,11 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddSingleton<ITelegramBotClient>(x =>
 {
-    var token = builder.Configuration["BaleSettings:Token"]!;
+    var configuration = x.GetRequiredService<IConfiguration>();
+    var token = configuration["BaleSettings:Token"]!;
+    var baseUrl = configuration["BaleSettings:ApiBaseUrl"] ?? "https://tapi.bale.ai";
 
-    return new TelegramBotClient(token);
+    return new TelegramBotClient(new TelegramBotClientOptions(token, baseUrl));
 });
 
 builder.Services
@@ -83,6 +85,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+var receiptsDirectory = Path.Combine(app.Environment.WebRootPath, "receipts");
+Directory.CreateDirectory(receiptsDirectory);
 
 app.UseStaticFiles();
 

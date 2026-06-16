@@ -3,8 +3,7 @@ using BaleManagerSystem.Models.ViewModels;
 using BaleManagerSystem.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Numerics;
-using System.Threading.Tasks;
+using Telegram.Bot;
 
 namespace BaleManagerSystem.Controllers
 {
@@ -29,6 +28,10 @@ namespace BaleManagerSystem.Controllers
 
         private readonly AccountBalancesExcelExporter _accountExcelExporter;
 
+        private readonly ReceiptFileService _receiptFiles;
+
+        private readonly ITelegramBotClient _botClient;
+
         public AdminController(
             BaleMessageService baleService,
             SafirUserRepository repo,
@@ -38,7 +41,9 @@ namespace BaleManagerSystem.Controllers
             ICoffeePriceRepository priceRepository,
             PaymentReportExcelExporter excelExporter,
             IAccountRepository accountRepository,
-            AccountBalancesExcelExporter accountExcelExporter)
+            AccountBalancesExcelExporter accountExcelExporter,
+            ReceiptFileService receiptFiles,
+            ITelegramBotClient botClient)
         {
             _baleService = baleService;
             _repo = repo;
@@ -49,6 +54,8 @@ namespace BaleManagerSystem.Controllers
             _excelExporter = excelExporter;
             _accountRepository = accountRepository;
             _accountExcelExporter = accountExcelExporter;
+            _receiptFiles = receiptFiles;
+            _botClient = botClient;
         }
         // DASHBOARD
         public async Task<IActionResult> Dashboard()
@@ -460,6 +467,25 @@ namespace BaleManagerSystem.Controllers
                 .ToList();
 
             return View(pending);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ReceiptImage(int id, CancellationToken cancellationToken)
+        {
+            var receipt = await _accountRepository.GetReceiptByIdAsync(id);
+
+            if (receipt == null)
+                return NotFound();
+
+            var imageBytes = await _receiptFiles.GetReceiptImageAsync(
+                _botClient,
+                receipt,
+                cancellationToken);
+
+            if (imageBytes == null || imageBytes.Length == 0)
+                return NotFound();
+
+            return File(imageBytes, "image/jpeg");
         }
 
         [HttpPost]
