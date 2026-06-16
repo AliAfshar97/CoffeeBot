@@ -1,4 +1,5 @@
 using BaleManagerSystem.Models;
+using BaleManagerSystem.Models.ViewModels;
 
 namespace BaleManagerSystem.Services
 {
@@ -9,5 +10,9 @@ namespace BaleManagerSystem.Services
         Task<List<CoffeeOrder>> GetOrdersAsync();
 
         Task<int> GetOrderCountAsync();
+
+        Task<PaymentReportViewModel> GetPaymentReportAsync(
+            DateTime? fromDate,
+            DateTime? toDate);
     }
 }

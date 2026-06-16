@@ -9,6 +9,7 @@ namespace BaleManagerSystem.Services
     {
         private readonly IUserRepository _users;
         private readonly IOrderRepository _orders;
+        private readonly ICoffeePriceRepository _prices;
         private readonly UserStateService _states;
         private readonly IConfiguration _configuration;
         private readonly ILogger<BaleUpdateHandler> _logger;
@@ -24,12 +25,14 @@ namespace BaleManagerSystem.Services
         public BaleUpdateHandler(
             IUserRepository users,
             IOrderRepository orders,
+            ICoffeePriceRepository prices,
             UserStateService states,
             IConfiguration configuration,
             ILogger<BaleUpdateHandler> logger)
         {
             _users = users;
             _orders = orders;
+            _prices = prices;
             _states = states;
             _configuration = configuration;
             _logger = logger;
@@ -184,13 +187,19 @@ namespace BaleManagerSystem.Services
                     displayName = user?.DisplayName ?? "Unknown";
                 }
 
+                var price = await _prices.GetPriceAsync(
+                    state.DrinkType,
+                    state.ShotCount,
+                    withChocolate) ?? 0;
+
                 var order = new CoffeeOrder
                 {
                     ChatId = chatId,
                     DisplayName = displayName,
                     DrinkType = state.DrinkType,
                     ShotCount = state.ShotCount,
-                    WithChocolate = withChocolate
+                    WithChocolate = withChocolate,
+                    PriceInToman = price
                 };
 
                 await _orders.SaveOrderAsync(order);
@@ -203,7 +212,8 @@ namespace BaleManagerSystem.Services
                     $"Name: {displayName}\n" +
                     $"Drink: {state.DrinkType}\n" +
                     $"Shots: {state.ShotCount}\n" +
-                    $"Chocolate: {chocolateText}\n\n" +
+                    $"Chocolate: {chocolateText}\n" +
+                    $"Price: {price:N0} Toman\n\n" +
                     "Send /start to place another order.");
 
                 await NotifyAdminAsync(botClient, order, chocolateText);
@@ -233,7 +243,8 @@ namespace BaleManagerSystem.Services
                     $"Chat ID: {order.ChatId}\n" +
                     $"Drink: {order.DrinkType}\n" +
                     $"Shots: {order.ShotCount}\n" +
-                    $"Chocolate: {chocolateText}");
+                    $"Chocolate: {chocolateText}\n" +
+                    $"Price: {order.PriceInToman:N0} Toman");
             }
             catch (Exception ex)
             {

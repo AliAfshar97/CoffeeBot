@@ -21,18 +21,26 @@ namespace BaleManagerSystem.Controllers
 
         private readonly IOrderRepository _orderRepository;
 
+        private readonly ICoffeePriceRepository _priceRepository;
+
+        private readonly PaymentReportExcelExporter _excelExporter;
+
         public AdminController(
             BaleMessageService baleService,
             SafirUserRepository repo,
             BroadcastService broadcast,
             IUserRepository userRepository,
-            IOrderRepository orderRepository)
+            IOrderRepository orderRepository,
+            ICoffeePriceRepository priceRepository,
+            PaymentReportExcelExporter excelExporter)
         {
             _baleService = baleService;
             _repo = repo;
             _broadcast = broadcast;
             _userRepository = userRepository;
             _orderRepository = orderRepository;
+            _priceRepository = priceRepository;
+            _excelExporter = excelExporter;
         }
         // DASHBOARD
         public async Task<IActionResult> Dashboard()
@@ -315,6 +323,80 @@ namespace BaleManagerSystem.Controllers
             var data = await _orderRepository.GetOrdersAsync();
 
             return View(data);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Prices()
+        {
+            var vm = new PricesPageViewModel
+            {
+                Prices = await _priceRepository.GetAllAsync()
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Prices(PricesPageViewModel vm)
+        {
+            if (vm.Prices == null || !vm.Prices.Any())
+            {
+                vm.Prices = await _priceRepository.GetAllAsync();
+
+                ViewBag.Message = "No prices to save.";
+
+                return View(vm);
+            }
+
+            await _priceRepository.UpdatePricesAsync(vm.Prices);
+
+            ViewBag.Message = "Prices updated successfully.";
+
+            vm.Prices = await _priceRepository.GetAllAsync();
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> PaymentReport(DateTime? fromDate, DateTime? toDate)
+        {
+            var report = await _orderRepository.GetPaymentReportAsync(fromDate, toDate);
+
+            return View(report);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportPaymentReport(DateTime? fromDate, DateTime? toDate)
+        {
+            var report = await _orderRepository.GetPaymentReportAsync(fromDate, toDate);
+            var fileBytes = _excelExporter.Export(report);
+
+            var fileName = BuildReportFileName(fromDate, toDate);
+
+            return File(
+                fileBytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileName);
+        }
+
+        private static string BuildReportFileName(DateTime? fromDate, DateTime? toDate)
+        {
+            if (fromDate.HasValue && toDate.HasValue)
+            {
+                return $"PaymentReport_{fromDate:yyyy-MM-dd}_to_{toDate:yyyy-MM-dd}.xlsx";
+            }
+
+            if (fromDate.HasValue)
+            {
+                return $"PaymentReport_from_{fromDate:yyyy-MM-dd}.xlsx";
+            }
+
+            if (toDate.HasValue)
+            {
+                return $"PaymentReport_to_{toDate:yyyy-MM-dd}.xlsx";
+            }
+
+            return $"PaymentReport_{DateTime.Now:yyyy-MM-dd}.xlsx";
         }
     }
 }

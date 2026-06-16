@@ -1,0 +1,116 @@
+@model BaleManagerSystem.Models.ViewModels.PricesPageViewModel
+
+@{
+    ViewData["Title"] = "Menu Prices";
+}
+
+<div class="card shadow-lg border-0 rounded-4">
+
+    <div class="card-body p-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+
+                <h2 class="fw-bold">
+
+                    <i class="bi bi-tags-fill text-primary"></i>
+
+                    Menu Prices
+
+                </h2>
+
+                <p class="text-muted mb-0">
+                    Set price in Toman for each drink, shot count, and chocolate option.
+                </p>
+
+            </div>
+
+        </div>
+
+        @if (ViewBag.Message != null)
+        {
+            <div class="alert alert-success">
+                @ViewBag.Message
+            </div>
+        }
+
+        <form asp-action="Prices" method="post">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th>Drink</th>
+
+                            <th>Shots</th>
+
+                            <th>Chocolate</th>
+
+                            <th style="width: 180px;">Price (Toman)</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @for (var i = 0; i < Model.Prices.Count; i++)
+                        {
+                            <tr>
+
+                                <td>@Model.Prices[i].DrinkType</td>
+
+                                <td>@Model.Prices[i].ShotCount</td>
+
+                                <td>
+                                    @(Model.Prices[i].WithChocolate ? "Yes" : "No")
+                                </td>
+
+                                <td>
+
+                                    <input type="hidden"
+                                           asp-for="Prices[i].Id" />
+
+                                    <input type="hidden"
+                                           asp-for="Prices[i].DrinkType" />
+
+                                    <input type="hidden"
+                                           asp-for="Prices[i].ShotCount" />
+
+                                    <input type="hidden"
+                                           asp-for="Prices[i].WithChocolate" />
+
+                                    <input asp-for="Prices[i].PriceInToman"
+                                           class="form-control"
+                                           type="number"
+                                           min="0"
+                                           step="1" />
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-modern mt-3">
+
+                <i class="bi bi-save"></i>
+                Save Prices
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
