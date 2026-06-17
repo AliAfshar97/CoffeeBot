@@ -497,11 +497,33 @@ namespace BaleManagerSystem.Controllers
                 return RedirectToAction(nameof(Receipts));
             }
 
-            await _accountRepository.ApproveReceiptAsync(
-                model.ReceiptId,
+            var receipt = await _accountRepository.GetReceiptByIdAsync(model.ReceiptId);
+
+            if (receipt == null || receipt.Status != ReceiptStatuses.Pending)
+            {
+                TempData["Error"] = "رسید یافت نشد یا قبلاً بررسی شده است.";
+                return RedirectToAction(nameof(Receipts));
+            }
+
+            try
+            {
+                await _accountRepository.ApproveReceiptAsync(
+                    model.ReceiptId,
+                    model.CreditAmount,
+                    model.AdminNote,
+                    User.Identity?.Name ?? "admin");
+            }
+            catch (InvalidOperationException)
+            {
+                TempData["Error"] = "رسید یافت نشد یا قبلاً بررسی شده است.";
+                return RedirectToAction(nameof(Receipts));
+            }
+
+            await TryNotifyClientAboutReceiptAsync(
+                receipt,
+                approved: true,
                 model.CreditAmount,
-                model.AdminNote,
-                User.Identity?.Name ?? "admin");
+                model.AdminNote);
 
             TempData["Message"] = "رسید تایید شد و بستانکاری ثبت گردید.";
 
@@ -511,11 +533,86 @@ namespace BaleManagerSystem.Controllers
         [HttpPost]
         public async Task<IActionResult> RejectReceipt(int receiptId, string? adminNote)
         {
+            var receipt = await _accountRepository.GetReceiptByIdAsync(receiptId);
+
+            if (receipt == null || receipt.Status != ReceiptStatuses.Pending)
+            {
+                TempData["Error"] = "رسید یافت نشد یا قبلاً بررسی شده است.";
+                return RedirectToAction(nameof(Receipts));
+            }
+
             await _accountRepository.RejectReceiptAsync(receiptId, adminNote);
+
+            await TryNotifyClientAboutReceiptAsync(
+                receipt,
+                approved: false,
+                creditAmount: null,
+                adminNote);
 
             TempData["Message"] = "رسید رد شد.";
 
             return RedirectToAction(nameof(Receipts));
+        }
+
+        private async Task TryNotifyClientAboutReceiptAsync(
+            PaymentReceipt receipt,
+            bool approved,
+            int? creditAmount,
+            string? adminNote)
+        {
+            try
+            {
+                var message = approved
+                    ? BuildApprovedReceiptMessage(receipt, creditAmount!.Value, adminNote)
+                    : BuildRejectedReceiptMessage(receipt, adminNote);
+
+                await _botClient.SendMessage(receipt.ChatId, message);
+            }
+            catch
+            {
+                TempData["Error"] = (TempData["Error"] as string) ??
+                    "عملیات انجام شد، اما ارسال پیام به کاربر در ربات ناموفق بود.";
+            }
+        }
+
+        private static string BuildApprovedReceiptMessage(
+            PaymentReceipt receipt,
+            int creditAmount,
+            string? adminNote)
+        {
+            var message =
+                "رسید پرداخت شما توسط مدیر تایید شد.\n\n" +
+                $"شماره رسید: {receipt.Id}\n" +
+                $"مبلغ شارژ: {creditAmount:N0} تومان";
+
+            if (!string.IsNullOrWhiteSpace(adminNote))
+            {
+                message += $"\nیادداشت مدیر: {adminNote}";
+            }
+
+            message += "\n\nحساب شما به‌روزرسانی شد.\n" +
+                       "برای مشاهده منو /start را ارسال کنید.";
+
+            return message;
+        }
+
+        private static string BuildRejectedReceiptMessage(
+            PaymentReceipt receipt,
+            string? adminNote)
+        {
+            var message =
+                "رسید پرداخت شما توسط مدیر رد شد.\n\n" +
+                $"شماره رسید: {receipt.Id}";
+
+            if (!string.IsNullOrWhiteSpace(adminNote))
+            {
+                message += $"\nدلیل: {adminNote}";
+            }
+
+            message += "\n\nدر صورت نیاز می‌توانید رسید جدید از منوی ربات ارسال کنید.\n" +
+                       "برای باز کردن منو /start را ارسال کنید.";
+
+            return message;
         }
 
         private static string BuildAccountFileName(DateTime? fromDate, DateTime? toDate)
