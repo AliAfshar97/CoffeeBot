@@ -251,7 +251,7 @@ namespace BaleManagerSystem.Services
             {
                 await botClient.SendMessage(
                     chatId,
-                    "خیلی ام عالی دوست حساب رایانی! خوشحالیم اینجایی چی میل داری؟",
+                    "خیلی ام عالی دوست من! خوشحالیم اینجایی چی میل داری؟",
                     replyMarkup: BuildDrinkMenu(),
                     cancellationToken: ct);
 

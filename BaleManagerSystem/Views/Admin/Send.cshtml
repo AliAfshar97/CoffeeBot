@@ -211,20 +211,15 @@
                     <!-- SELECT ALL -->
                     <div class="mb-3">
 
-                        <div class="form-check">
+                        <label class="d-flex align-items-center gap-2 mb-0 user-select-label">
 
                             <input type="checkbox"
-                                   class="form-check-input"
+                                   class="form-check-input flex-shrink-0"
                                    id="selectAll" />
 
-                            <label class="form-check-label"
-                                   for="selectAll">
+                            <span>انتخاب همه</span>
 
-                                انتخاب همه
-
-                            </label>
-
-                        </div>
+                        </label>
 
                     </div>
 
@@ -235,34 +230,30 @@
 
                             @foreach (var user in Model.PhoneUsers)
                             {
-                                <div class="user-item border rounded-4 p-3 mb-3 shadow-sm">
+                                <label class="user-item border rounded-4 p-3 mb-3 shadow-sm d-flex align-items-center gap-3 w-100 user-select-label">
 
-                                    <div class="form-check d-flex align-items-center">
+                                    <input class="form-check-input flex-shrink-0 user-checkbox"
+                                           type="checkbox"
+                                           name="SelectedPhones"
+                                           value="@user.PhoneNumber" />
 
-                                        <input class="form-check-input user-checkbox me-3"
-                                               type="checkbox"
-                                               name="SelectedPhones"
-                                               value="@user.PhoneNumber" />
+                                    <div class="flex-grow-1">
 
-                                        <div>
+                                        <div class="fw-bold">
 
-                                            <div class="fw-bold">
+                                            @user.PhoneNumber
 
-                                                @user.PhoneNumber
+                                        </div>
 
-                                            </div>
+                                        <div class="text-muted">
 
-                                            <div class="text-muted">
-
-                                                @user.Username
-
-                                            </div>
+                                            @user.Username
 
                                         </div>
 
                                     </div>
 
-                                </div>
+                                </label>
                             }
 
                         </div>
@@ -273,42 +264,38 @@
 
                             @foreach (var user in Model.TelegramUsers)
                             {
-                                <div class="user-item border rounded-4 p-3 mb-3 shadow-sm">
+                                <label class="user-item border rounded-4 p-3 mb-3 shadow-sm d-flex align-items-center gap-3 w-100 user-select-label">
 
-                                    <div class="form-check d-flex align-items-center">
+                                    <input class="form-check-input flex-shrink-0 user-checkbox"
+                                           type="checkbox"
+                                           name="SelectedChatIds"
+                                           value="@user.ChatId" />
 
-                                        <input class="form-check-input user-checkbox me-3"
-                                               type="checkbox"
-                                               name="SelectedChatIds"
-                                               value="@user.ChatId" />
+                                    <div class="flex-grow-1">
 
-                                        <div>
+                                        <div class="fw-bold">
 
-                                            <div class="fw-bold">
-
-                                                @user.Username
-
-                                            </div>
-
-                                            <div class="text-primary">
-
-                                                شناسه چت:
-                                                @user.ChatId
-
-                                            </div>
-
-                                            <small class="text-muted">
-
-                                                تاریخ ثبت:
-                                                @user.FirstSeen.ToString("yyyy/MM/dd")
-
-                                            </small>
+                                            @user.Username
 
                                         </div>
 
+                                        <div class="text-primary">
+
+                                            شناسه چت:
+                                            @user.ChatId
+
+                                        </div>
+
+                                        <small class="text-muted">
+
+                                            تاریخ ثبت:
+                                            @user.FirstSeen.ToString("yyyy/MM/dd")
+
+                                        </small>
+
                                     </div>
 
-                                </div>
+                                </label>
                             }
 
                         </div>
@@ -355,6 +342,8 @@
             telegramUsers.style.display = "none";
 
             recipientType.value = "Phone";
+            document.getElementById("selectAll").checked = false;
+            updateSelectedCount();
         });
 
         telegramTab.addEventListener("click", () => {
@@ -366,6 +355,8 @@
             phoneUsers.style.display = "none";
 
             recipientType.value = "Telegram";
+            document.getElementById("selectAll").checked = false;
+            updateSelectedCount();
         });
 
         document.getElementById("userSearch")
@@ -394,8 +385,7 @@
                 let checked =
                     this.checked;
 
-                document
-                    .querySelectorAll(".user-checkbox")
+                getVisibleCheckboxes()
                     .forEach(cb => {
 
                         cb.checked = checked;
@@ -404,12 +394,24 @@
                 updateSelectedCount();
             });
 
+        function getVisibleCheckboxes()
+        {
+            const activeList =
+                recipientType.value === "Telegram"
+                    ? telegramUsers
+                    : phoneUsers;
+
+            return activeList.querySelectorAll(".user-checkbox");
+        }
+
         function updateSelectedCount()
         {
             const count =
-                document.querySelectorAll(
-                    ".user-checkbox:checked")
-                    .length;
+                getVisibleCheckboxes().length > 0
+                    ? Array.from(getVisibleCheckboxes())
+                        .filter(cb => cb.checked)
+                        .length
+                    : 0;
 
             document.getElementById(
                 "selectedCount")
