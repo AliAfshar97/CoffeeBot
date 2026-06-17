@@ -7,7 +7,8 @@ namespace BaleManagerSystem.Models
             "Espresso",
             "Latte",
             "Cappuccino",
-            "Milk"
+            "Milk",
+            "Chocolate"
         };
 
         public static readonly byte[] ShotCounts = { 1, 2 };

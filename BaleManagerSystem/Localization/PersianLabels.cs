@@ -8,6 +8,7 @@ namespace BaleManagerSystem.Localization
             "Latte" => "لاته",
             "Cappuccino" => "کاپوچینو",
             "Milk" => "شیر",
+            "Chocolate" => "شکلات",
             _ => name ?? string.Empty
         };
 

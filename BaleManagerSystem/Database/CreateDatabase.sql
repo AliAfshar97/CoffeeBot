@@ -70,7 +70,8 @@ BEGIN
     ('Milk',       1, 0, 8),
     ('Milk',       2, 0, 10),
     ('Milk',       1, 1, 10),
-    ('Milk',       2, 1, 12);
+    ('Milk',       2, 1, 12),
+    ('Chocolate',  1, 0, 15);
 END
 GO
 

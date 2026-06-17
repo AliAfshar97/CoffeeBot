@@ -21,7 +21,8 @@ namespace BaleManagerSystem.Services
             ["espresso"] = "Espresso",
             ["latte"] = "Latte",
             ["cappuccino"] = "Cappuccino",
-            ["milk"] = "Milk"
+            ["milk"] = "Milk",
+            ["chocolate"] = "Chocolate"
         };
 
         private static readonly Dictionary<string, string> DrinkNamesPersian = new()
@@ -29,8 +30,12 @@ namespace BaleManagerSystem.Services
             ["Espresso"] = "اسپرسو",
             ["Latte"] = "لاته",
             ["Cappuccino"] = "کاپوچینو",
-            ["Milk"] = "شیر"
+            ["Milk"] = "شیر",
+            ["Chocolate"] = "شکلات"
         };
+
+        private const string ChocolateDrinkType = "Chocolate";
+        private const string MilkDrinkType = "Milk";
 
         public BaleUpdateHandler(
             IUserRepository users,
@@ -158,10 +163,18 @@ namespace BaleManagerSystem.Services
                 await _users.UpdateDisplayNameAsync(chatId, text);
                 state.Step = ConversationStep.None;
 
+                if (IsChocolateDrink(state.DrinkType))
+                {
+                    state.ShotCount = 1;
+                    await CompleteOrderAsync(botClient, chatId, state, withChocolate: false, ct);
+                    return;
+                }
+
                 await botClient.SendMessage(
                     chatId,
-                    $"{text} عزیز، ممنون! چند شات می‌خواهید؟",
-                    replyMarkup: BuildShotMenu());
+                    BuildQuantityPrompt(text, state.DrinkType, isNameJustEntered: true),
+                    replyMarkup: BuildQuantityMenu(state.DrinkType),
+                    cancellationToken: ct);
 
                 return;
             }
@@ -238,7 +251,7 @@ namespace BaleManagerSystem.Services
             {
                 await botClient.SendMessage(
                     chatId,
-                    "نوشیدنی مورد نظر را انتخاب کنید:",
+                    "خیلی ام عالی دوست حساب رایانی! خوشحالیم اینجایی چی میل داری؟",
                     replyMarkup: BuildDrinkMenu(),
                     cancellationToken: ct);
 
@@ -268,7 +281,6 @@ namespace BaleManagerSystem.Services
                 state.Step = ConversationStep.None;
 
                 var user = await _users.GetUserByChatIdAsync(chatId);
-                var drinkPersian = DrinkNamesPersian.GetValueOrDefault(state.DrinkType, state.DrinkType);
 
                 if (user == null || string.IsNullOrWhiteSpace(user.DisplayName))
                 {
@@ -276,16 +288,25 @@ namespace BaleManagerSystem.Services
 
                     await botClient.SendMessage(
                         chatId,
-                        "خوش آمدید! لطفاً نام خود را وارد کنید (برای سفارش‌های بعدی شما را می‌شناسیم):");
+                        "خوش آمدید! لطفاً نام خود را وارد کنید (برای سفارش‌های بعدی شما را می‌شناسیم):",
+                        cancellationToken: ct);
                 }
                 else
                 {
                     state.DisplayName = user.DisplayName;
 
+                    if (IsChocolateDrink(state.DrinkType))
+                    {
+                        state.ShotCount = 1;
+                        await CompleteOrderAsync(botClient, chatId, state, withChocolate: false, ct);
+                        return;
+                    }
+
                     await botClient.SendMessage(
                         chatId,
-                        $"{user.DisplayName} عزیز! برای {drinkPersian} چند شات می‌خواهید؟",
-                        replyMarkup: BuildShotMenu());
+                        BuildQuantityPrompt(user.DisplayName, state.DrinkType, isNameJustEntered: false),
+                        replyMarkup: BuildQuantityMenu(state.DrinkType),
+                        cancellationToken: ct);
                 }
 
                 return;
@@ -299,17 +320,25 @@ namespace BaleManagerSystem.Services
                     await botClient.SendMessage(
                         chatId,
                         "لطفاً /start را بزنید و «ثبت سفارش» را انتخاب کنید.",
-                        replyMarkup: BuildMainMenu());
+                        replyMarkup: BuildMainMenu(),
+                        cancellationToken: ct);
 
                     return;
                 }
 
                 state.ShotCount = data == "shots_1" ? (byte)1 : (byte)2;
 
+                if (IsChocolateDrink(state.DrinkType))
+                {
+                    await CompleteOrderAsync(botClient, chatId, state, withChocolate: false, ct);
+                    return;
+                }
+
                 await botClient.SendMessage(
                     chatId,
                     "شکلات هم می‌خواهید؟",
-                    replyMarkup: BuildChocolateMenu());
+                    replyMarkup: BuildChocolateMenu(),
+                    cancellationToken: ct);
 
                 return;
             }
@@ -323,61 +352,154 @@ namespace BaleManagerSystem.Services
                     await botClient.SendMessage(
                         chatId,
                         "لطفاً /start را بزنید و «ثبت سفارش» را انتخاب کنید.",
-                        replyMarkup: BuildMainMenu());
+                        replyMarkup: BuildMainMenu(),
+                        cancellationToken: ct);
 
                     return;
                 }
 
                 var withChocolate = data == "choc_yes";
-                var displayName = state.DisplayName;
-
-                if (string.IsNullOrWhiteSpace(displayName))
-                {
-                    var user = await _users.GetUserByChatIdAsync(chatId);
-                    displayName = user?.DisplayName ?? "نامشخص";
-                }
-
-                var price = await _prices.GetPriceAsync(
-                    state.DrinkType,
-                    state.ShotCount,
-                    withChocolate) ?? 0;
-
-                var drinkPersian = DrinkNamesPersian.GetValueOrDefault(state.DrinkType, state.DrinkType);
-
-                var order = new CoffeeOrder
-                {
-                    ChatId = chatId,
-                    DisplayName = displayName,
-                    DrinkType = state.DrinkType,
-                    ShotCount = state.ShotCount,
-                    WithChocolate = withChocolate,
-                    PriceInToman = price
-                };
-
-                var orderId = await _orders.SaveOrderAsync(order);
-
-                await _accounts.AddDebitAsync(
-                    chatId,
-                    price,
-                    $"سفارش: {drinkPersian} {state.ShotCount} شات",
-                    orderId);
-
-                var chocolateText = withChocolate ? "بله" : "خیر";
-
-                await botClient.SendMessage(
-                    chatId,
-                    "سفارش شما ثبت شد!\n\n" +
-                    $"نام: {displayName}\n" +
-                    $"نوشیدنی: {drinkPersian}\n" +
-                    $"شات: {state.ShotCount}\n" +
-                    $"شکلات: {chocolateText}\n" +
-                    $"مبلغ: {price:N0} تومان\n\n" +
-                    "برای منوی اصلی /start را ارسال کنید.");
-
-                await NotifyAdminAsync(botClient, order, chocolateText, drinkPersian);
-
-                _states.Remove(chatId);
+                await CompleteOrderAsync(botClient, chatId, state, withChocolate, ct);
             }
+        }
+
+        private async Task CompleteOrderAsync(
+            ITelegramBotClient botClient,
+            long chatId,
+            UserState state,
+            bool withChocolate,
+            CancellationToken ct)
+        {
+            var displayName = state.DisplayName;
+
+            if (string.IsNullOrWhiteSpace(displayName))
+            {
+                var user = await _users.GetUserByChatIdAsync(chatId);
+                displayName = user?.DisplayName ?? "نامشخص";
+            }
+
+            var price = await _prices.GetPriceAsync(
+                state.DrinkType,
+                state.ShotCount,
+                withChocolate) ?? 0;
+
+            var drinkPersian = DrinkNamesPersian.GetValueOrDefault(state.DrinkType, state.DrinkType);
+
+            var order = new CoffeeOrder
+            {
+                ChatId = chatId,
+                DisplayName = displayName,
+                DrinkType = state.DrinkType,
+                ShotCount = state.ShotCount,
+                WithChocolate = withChocolate,
+                PriceInToman = price
+            };
+
+            var orderId = await _orders.SaveOrderAsync(order);
+
+            await _accounts.AddDebitAsync(
+                chatId,
+                price,
+                BuildDebitDescription(drinkPersian, state.DrinkType, state.ShotCount, withChocolate),
+                orderId);
+
+            var confirmation = BuildOrderConfirmation(
+                displayName,
+                drinkPersian,
+                state.DrinkType,
+                state.ShotCount,
+                withChocolate,
+                price);
+
+            await botClient.SendMessage(
+                chatId,
+                confirmation,
+                cancellationToken: ct);
+
+            if (!IsChocolateDrink(state.DrinkType))
+            {
+                var chocolateText = withChocolate ? "بله" : "خیر";
+                await NotifyAdminAsync(botClient, order, chocolateText, drinkPersian);
+            }
+            else
+            {
+                await NotifyAdminAsync(botClient, order, "-", drinkPersian);
+            }
+
+            _states.Remove(chatId);
+        }
+
+        private static bool IsChocolateDrink(string drinkType) =>
+            drinkType == ChocolateDrinkType;
+
+        private static bool UsesCups(string drinkType) =>
+            drinkType == MilkDrinkType;
+
+        private static string BuildQuantityPrompt(
+            string displayName,
+            string drinkType,
+            bool isNameJustEntered)
+        {
+            var drinkPersian = DrinkNamesPersian.GetValueOrDefault(drinkType, drinkType);
+
+            if (UsesCups(drinkType))
+            {
+                return isNameJustEntered
+                    ? $"{displayName} عزیز، ممنون! چند لیوان می‌خواهید؟"
+                    : $"{displayName} عزیز! برای {drinkPersian} چند لیوان می‌خواهید؟";
+            }
+
+            return isNameJustEntered
+                ? $"{displayName} عزیز، ممنون! برای {drinkPersian} چند شات می‌خواهید؟"
+                : $"{displayName} عزیز! برای {drinkPersian} چند شات می‌خواهید؟";
+        }
+
+        private static string BuildDebitDescription(
+            string drinkPersian,
+            string drinkType,
+            byte shotCount,
+            bool withChocolate)
+        {
+            if (IsChocolateDrink(drinkType))
+                return $"سفارش: {drinkPersian}";
+
+            var unit = UsesCups(drinkType) ? "لیوان" : "شات";
+            var description = $"سفارش: {drinkPersian} {shotCount} {unit}";
+
+            if (!IsChocolateDrink(drinkType))
+                description += withChocolate ? " با شکلات" : "";
+
+            return description;
+        }
+
+        private static string BuildOrderConfirmation(
+            string displayName,
+            string drinkPersian,
+            string drinkType,
+            byte shotCount,
+            bool withChocolate,
+            int price)
+        {
+            var lines = new List<string>
+            {
+                "سفارش شما ثبت شد!",
+                "",
+                $"نام: {displayName}",
+                $"نوشیدنی: {drinkPersian}"
+            };
+
+            if (!IsChocolateDrink(drinkType))
+            {
+                var unit = UsesCups(drinkType) ? "لیوان" : "شات";
+                lines.Add($"{unit}: {shotCount}");
+                lines.Add($"شکلات: {(withChocolate ? "بله" : "خیر")}");
+            }
+
+            lines.Add($"مبلغ: {price:N0} تومان");
+            lines.Add("");
+            lines.Add("برای منوی اصلی /start را ارسال کنید.");
+
+            return string.Join("\n", lines);
         }
 
         private async Task NotifyAdminReceiptAsync(
@@ -437,8 +559,8 @@ namespace BaleManagerSystem.Services
                     $"نام: {order.DisplayName}\n" +
                     $"شناسه چت: {order.ChatId}\n" +
                     $"نوشیدنی: {drinkPersian}\n" +
-                    $"شات: {order.ShotCount}\n" +
-                    $"شکلات: {chocolateText}\n" +
+                    BuildAdminQuantityLine(order) +
+                    BuildAdminChocolateLine(order, chocolateText) +
                     $"مبلغ: {order.PriceInToman:N0} تومان");
             }
             catch (Exception ex)
@@ -462,6 +584,23 @@ namespace BaleManagerSystem.Services
             });
         }
 
+        private static string BuildAdminQuantityLine(CoffeeOrder order)
+        {
+            if (IsChocolateDrink(order.DrinkType))
+                return string.Empty;
+
+            var unit = UsesCups(order.DrinkType) ? "لیوان" : "شات";
+            return $"{unit}: {order.ShotCount}\n";
+        }
+
+        private static string BuildAdminChocolateLine(CoffeeOrder order, string chocolateText)
+        {
+            if (IsChocolateDrink(order.DrinkType))
+                return string.Empty;
+
+            return $"شکلات: {chocolateText}\n";
+        }
+
         private static InlineKeyboardMarkup BuildDrinkMenu()
         {
             return new InlineKeyboardMarkup(new[]
@@ -475,12 +614,28 @@ namespace BaleManagerSystem.Services
                 {
                     InlineKeyboardButton.WithCallbackData("کاپوچینو", "cappuccino"),
                     InlineKeyboardButton.WithCallbackData("شیر", "milk")
+                },
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("شکلات", "chocolate")
                 }
             });
         }
 
-        private static InlineKeyboardMarkup BuildShotMenu()
+        private static InlineKeyboardMarkup BuildQuantityMenu(string drinkType)
         {
+            if (UsesCups(drinkType))
+            {
+                return new InlineKeyboardMarkup(new[]
+                {
+                    new[]
+                    {
+                        InlineKeyboardButton.WithCallbackData("۱ لیوان", "shots_1"),
+                        InlineKeyboardButton.WithCallbackData("۲ لیوان", "shots_2")
+                    }
+                });
+            }
+
             return new InlineKeyboardMarkup(new[]
             {
                 new[]
