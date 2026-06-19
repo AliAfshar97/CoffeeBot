@@ -307,5 +307,19 @@ namespace BaleManagerSystem.Services
 
             await conn.ExecuteAsync(sql, new { Id = receiptId, AdminNote = adminNote });
         }
+
+        public async Task<int> GetLifetimeRemainingAsync(long chatId)
+        {
+            using var conn = new SqlConnection(ConnectionString);
+
+            const string sql = @"
+            SELECT
+                ISNULL(SUM(CASE WHEN TransactionType = 'Debit' THEN Amount ELSE 0 END), 0)
+              - ISNULL(SUM(CASE WHEN TransactionType = 'Credit' THEN Amount ELSE 0 END), 0)
+            FROM AccountLedger
+            WHERE ChatId = @ChatId";
+
+            return await conn.ExecuteScalarAsync<int>(sql, new { ChatId = chatId });
+        }
     }
 }

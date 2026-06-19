@@ -65,6 +65,8 @@ builder.Services.AddScoped<AccountBalancesExcelExporter>();
 
 builder.Services.AddScoped<ReceiptFileService>();
 
+builder.Services.AddScoped<AccountStatementService>();
+
 builder.Services.AddScoped<BaleUpdateHandler>();
 
 builder.Services.AddScoped<BroadcastService>();

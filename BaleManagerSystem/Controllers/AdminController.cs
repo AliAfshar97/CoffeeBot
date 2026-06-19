@@ -32,6 +32,8 @@ namespace BaleManagerSystem.Controllers
 
         private readonly ITelegramBotClient _botClient;
 
+        private readonly AccountStatementService _accountStatementService;
+
         public AdminController(
             BaleMessageService baleService,
             SafirUserRepository repo,
@@ -43,7 +45,8 @@ namespace BaleManagerSystem.Controllers
             IAccountRepository accountRepository,
             AccountBalancesExcelExporter accountExcelExporter,
             ReceiptFileService receiptFiles,
-            ITelegramBotClient botClient)
+            ITelegramBotClient botClient,
+            AccountStatementService accountStatementService)
         {
             _baleService = baleService;
             _repo = repo;
@@ -56,6 +59,7 @@ namespace BaleManagerSystem.Controllers
             _accountExcelExporter = accountExcelExporter;
             _receiptFiles = receiptFiles;
             _botClient = botClient;
+            _accountStatementService = accountStatementService;
         }
         // DASHBOARD
         public async Task<IActionResult> Dashboard()
@@ -240,45 +244,84 @@ namespace BaleManagerSystem.Controllers
                     return View(vm);
                 }
 
-                foreach (var chatid in vm.SelectedChatIds)
+                if (vm.IncludeAccountStatement)
+                {
+                    if (!vm.StatementFromDate.HasValue ||
+                        !vm.StatementToDate.HasValue ||
+                        !vm.PaymentDueDate.HasValue)
+                    {
+                        ViewBag.Error =
+                            "برای پیوست صورت‌حساب، تاریخ شروع، پایان و مهلت پرداخت را وارد کنید.";
+
+                        return View(vm);
+                    }
+
+                    if (vm.StatementFromDate > vm.StatementToDate)
+                    {
+                        ViewBag.Error =
+                            "تاریخ شروع نمی‌تواند بعد از تاریخ پایان باشد.";
+
+                        return View(vm);
+                    }
+                }
+
+                string? fileId = null;
+
+                if (vm.Attachment != null)
+                {
+                    fileId = await _baleService.UploadFileAsync(vm.Attachment);
+                }
+
+                foreach (var chatId in vm.SelectedChatIds.Distinct())
                 {
                     try
                     {
-                        string? fileId = null;
+                        var message = vm.Message ?? string.Empty;
 
-                        if (vm.Attachment != null)
+                        if (vm.IncludeAccountStatement)
                         {
-                            fileId =
-                                await _baleService
-                                    .UploadFileAsync(
-                                        vm.Attachment);
+                            var statement = await _accountStatementService.BuildStatementAsync(
+                                chatId,
+                                vm.StatementFromDate!.Value,
+                                vm.StatementToDate!.Value,
+                                vm.PaymentDueDate!.Value);
+
+                            message = string.IsNullOrWhiteSpace(message)
+                                ? statement.TrimStart()
+                                : message + statement;
+                        }
+
+                        if (string.IsNullOrWhiteSpace(message))
+                        {
+                            failed++;
+                            continue;
                         }
 
                         var result = await _broadcast.SendToUsers(
-                             vm.SelectedChatIds,
-                             vm.Message,
-                             fileId);
+                            new List<long> { chatId },
+                            message,
+                            fileId);
 
                         if (result.SuccessCount > 0)
                         {
                             success++;
 
                             await _repo.SaveLogAsync(
-                            vm.Message,
-                            true,
-                            null,
-                            chatid,
-                            null);
+                                message,
+                                true,
+                                null,
+                                chatId,
+                                null);
                         }
                         else
                         {
                             failed++;
 
                             await _repo.SaveLogAsync(
-                                vm.Message,
+                                message,
                                 false,
                                 "Send failed",
-                                chatid,
+                                chatId,
                                 null);
                         }
                     }
@@ -290,7 +333,7 @@ namespace BaleManagerSystem.Controllers
                             vm.Message,
                             false,
                             ex.Message,
-                            chatid,
+                            chatId,
                             null);
                     }
                 }

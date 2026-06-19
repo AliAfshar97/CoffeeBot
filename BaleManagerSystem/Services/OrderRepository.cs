@@ -131,5 +131,47 @@ namespace BaleManagerSystem.Services
                 TotalOrders = orders.Count
             };
         }
+
+        public async Task<List<CoffeeOrder>> GetOrdersByChatAsync(
+            long chatId,
+            DateTime? fromDate,
+            DateTime? toDate)
+        {
+            using var conn = new SqlConnection(ConnectionString);
+
+            var toDateExclusive = toDate?.Date.AddDays(1);
+
+            const string sql = @"
+            SELECT
+                o.Id,
+                o.ChatId,
+                o.DisplayName,
+                o.DrinkType,
+                o.ShotCount,
+                o.WithChocolate,
+                COALESCE(
+                    NULLIF(o.PriceInToman, 0),
+                    p.PriceInToman,
+                    0) AS PriceInToman,
+                o.CreatedAt
+            FROM CoffeeOrders o
+            LEFT JOIN CoffeePrices p
+                ON p.DrinkType = o.DrinkType
+               AND p.ShotCount = o.ShotCount
+               AND p.WithChocolate = o.WithChocolate
+            WHERE o.ChatId = @ChatId
+              AND (@FromDate IS NULL OR o.CreatedAt >= @FromDate)
+              AND (@ToDate IS NULL OR o.CreatedAt < @ToDate)
+            ORDER BY o.CreatedAt";
+
+            var result = await conn.QueryAsync<CoffeeOrder>(sql, new
+            {
+                ChatId = chatId,
+                FromDate = fromDate?.Date,
+                ToDate = toDateExclusive
+            });
+
+            return result.ToList();
+        }
     }
 }

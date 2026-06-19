@@ -14,5 +14,10 @@ namespace BaleManagerSystem.Services
         Task<PaymentReportViewModel> GetPaymentReportAsync(
             DateTime? fromDate,
             DateTime? toDate);
+
+        Task<List<CoffeeOrder>> GetOrdersByChatAsync(
+            long chatId,
+            DateTime? fromDate,
+            DateTime? toDate);
     }
 }

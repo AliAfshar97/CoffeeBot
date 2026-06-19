@@ -68,6 +68,72 @@
 
                     </div>
 
+                    <div id="accountStatementPanel"
+                         class="mb-4 p-3 border rounded-4 bg-light"
+                         style="display:none;">
+
+                        <label class="d-flex align-items-start gap-2 mb-3 user-select-label">
+
+                            <input asp-for="IncludeAccountStatement"
+                                   class="form-check-input flex-shrink-0 mt-1"
+                                   type="checkbox"
+                                   id="includeAccountStatement" />
+
+                            <span>
+                                <span class="fw-semibold d-block">پیوست صورت‌حساب</span>
+                                <small class="text-muted">
+                                    مانده کل حساب + لیست سفارش‌های بازه زمانی + مهلت پرداخت
+                                </small>
+                            </span>
+
+                        </label>
+
+                        <div id="accountStatementFields">
+
+                            <div class="row g-3">
+
+                                <div class="col-md-4">
+
+                                    <label asp-for="StatementFromDate" class="form-label fw-semibold">
+                                        از تاریخ
+                                    </label>
+
+                                    <input asp-for="StatementFromDate"
+                                           type="date"
+                                           class="form-control rounded-4" />
+
+                                </div>
+
+                                <div class="col-md-4">
+
+                                    <label asp-for="StatementToDate" class="form-label fw-semibold">
+                                        تا تاریخ
+                                    </label>
+
+                                    <input asp-for="StatementToDate"
+                                           type="date"
+                                           class="form-control rounded-4" />
+
+                                </div>
+
+                                <div class="col-md-4">
+
+                                    <label asp-for="PaymentDueDate" class="form-label fw-semibold">
+                                        مهلت پرداخت
+                                    </label>
+
+                                    <input asp-for="PaymentDueDate"
+                                           type="date"
+                                           class="form-control rounded-4" />
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
                     @if (ViewBag.Error != null)
                     {
                         <div class="alert alert-danger rounded-4">
@@ -331,7 +397,35 @@
         const recipientType =
             document.getElementById("recipientType");
 
+        const accountStatementPanel =
+            document.getElementById("accountStatementPanel");
+
+        const includeAccountStatement =
+            document.getElementById("includeAccountStatement");
+
+        const accountStatementFields =
+            document.getElementById("accountStatementFields");
+
         recipientType.value = "Phone";
+
+        function toggleAccountStatementPanel()
+        {
+            const isTelegram = recipientType.value === "Telegram";
+            accountStatementPanel.style.display = isTelegram ? "" : "none";
+
+            if (!isTelegram)
+            {
+                includeAccountStatement.checked = false;
+            }
+
+            toggleAccountStatementFields();
+        }
+
+        function toggleAccountStatementFields()
+        {
+            accountStatementFields.style.display =
+                includeAccountStatement.checked ? "" : "none";
+        }
 
         phoneTab.addEventListener("click", () => {
 
@@ -343,6 +437,7 @@
 
             recipientType.value = "Phone";
             document.getElementById("selectAll").checked = false;
+            toggleAccountStatementPanel();
             updateSelectedCount();
         });
 
@@ -356,8 +451,13 @@
 
             recipientType.value = "Telegram";
             document.getElementById("selectAll").checked = false;
+            toggleAccountStatementPanel();
             updateSelectedCount();
         });
+
+        includeAccountStatement.addEventListener("change", toggleAccountStatementFields);
+
+        toggleAccountStatementPanel();
 
         document.getElementById("userSearch")
             .addEventListener("keyup", function () {
@@ -426,6 +526,17 @@
                     updateSelectedCount();
                 }
             });
+
+        document.querySelector("form").addEventListener("submit", function () {
+            const hiddenList =
+                recipientType.value === "Telegram"
+                    ? phoneUsers
+                    : telegramUsers;
+
+            hiddenList.querySelectorAll(".user-checkbox").forEach(cb => {
+                cb.disabled = true;
+            });
+        });
 
     </script>
 }

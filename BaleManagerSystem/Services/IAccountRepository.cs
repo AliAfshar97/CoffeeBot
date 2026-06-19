@@ -33,5 +33,7 @@ namespace BaleManagerSystem.Services
         Task ApproveReceiptAsync(int receiptId, int creditAmount, string? adminNote, string createdBy);
 
         Task RejectReceiptAsync(int receiptId, string? adminNote);
+
+        Task<int> GetLifetimeRemainingAsync(long chatId);
     }
 }

@@ -15,6 +15,14 @@
 
         public IFormFile? Attachment { get; set; }
 
+        public bool IncludeAccountStatement { get; set; }
+
+        public DateTime? StatementFromDate { get; set; }
+
+        public DateTime? StatementToDate { get; set; }
+
+        public DateTime? PaymentDueDate { get; set; }
+
         public List<UserModel> PhoneUsers { get; set; }
             = new();
 
