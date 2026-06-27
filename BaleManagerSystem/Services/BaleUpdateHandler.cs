@@ -116,11 +116,17 @@ namespace BaleManagerSystem.Services
             if (_states.TryGet(chatId, out var state) &&
                 state!.Step == ConversationStep.AwaitingReceiptPhoto)
             {
-                if (msg.Photo != null && msg.Photo.Length > 0)
+                var receiptFileId = GetReceiptFileId(msg);
+
+                if (receiptFileId != null)
                 {
-                    await HandleReceiptPhotoAsync(botClient, msg, chatId, ct);
+                    await HandleReceiptPhotoAsync(botClient, msg, chatId, receiptFileId, ct);
                     return;
                 }
+
+                _logger.LogInformation(
+                    "Receipt expected from {ChatId} but message had no photo/document (type {Type})",
+                    chatId, msg.Type);
 
                 await botClient.SendMessage(
                     chatId,
@@ -145,6 +151,21 @@ namespace BaleManagerSystem.Services
                 await _users.UpdateDisplayNameAsync(chatId, text);
                 state.Step = ConversationStep.None;
 
+                // The name was requested on the way to sending a receipt.
+                if (state.PendingReceipt)
+                {
+                    state.PendingReceipt = false;
+                    state.Step = ConversationStep.AwaitingReceiptPhoto;
+
+                    await botClient.SendMessage(
+                        chatId,
+                        "ممنون! حالا لطفاً عکس رسید پرداخت خود را ارسال کنید.\n" +
+                        "در صورت نیاز می‌توانید توضیحات را در caption بنویسید.",
+                        cancellationToken: ct);
+
+                    return;
+                }
+
                 var item = await _menu.GetByKeyAsync(state.DrinkType);
 
                 if (item == null)
@@ -164,21 +185,34 @@ namespace BaleManagerSystem.Services
                 "برای باز کردن منو /start را ارسال کنید.");
         }
 
+        // Returns the file id of a receipt image whether it arrived as a compressed
+        // photo or as a document/file (Bale often sends images as documents).
+        private static string? GetReceiptFileId(Message msg)
+        {
+            if (msg.Photo is { Length: > 0 })
+                return msg.Photo.OrderByDescending(p => p.FileSize).First().FileId;
+
+            if (msg.Document != null)
+                return msg.Document.FileId;
+
+            return null;
+        }
+
         private async Task HandleReceiptPhotoAsync(
             ITelegramBotClient botClient,
             Message msg,
             long chatId,
+            string fileId,
             CancellationToken ct)
         {
             var user = await _users.GetUserByChatIdAsync(chatId);
             var displayName = user?.DisplayName ?? msg.Chat.Username ?? chatId.ToString();
-            var photo = msg.Photo!.OrderByDescending(p => p.FileSize).First();
 
             var receipt = new PaymentReceipt
             {
                 ChatId = chatId,
                 DisplayName = displayName,
-                TelegramFileId = photo.FileId,
+                TelegramFileId = fileId,
                 UserCaption = msg.Caption
             };
 
@@ -186,7 +220,7 @@ namespace BaleManagerSystem.Services
 
             var localPath = await _receiptFiles.SaveTelegramPhotoAsync(
                 botClient,
-                photo,
+                fileId,
                 receiptId,
                 ct);
 
@@ -202,7 +236,7 @@ namespace BaleManagerSystem.Services
                 "رسید پرداخت شما دریافت شد.\n" +
                 "مدیر به زودی آن را بررسی و حساب شما را شارژ می‌کند.");
 
-            await NotifyAdminReceiptAsync(botClient, receiptId, displayName, chatId, photo.FileId, msg.Caption);
+            await NotifyAdminReceiptAsync(botClient, receiptId, displayName, chatId, fileId, msg.Caption);
         }
 
         private async Task TrySaveUserAsync(long chatId, string username, CancellationToken ct)
@@ -255,9 +289,27 @@ namespace BaleManagerSystem.Services
             if (data == "menu_receipt")
             {
                 var state = _states.GetOrCreate(chatId);
-                state.Step = ConversationStep.AwaitingReceiptPhoto;
                 state.DrinkType = string.Empty;
                 state.ShotCount = 0;
+
+                var receiptUser = await _users.GetUserByChatIdAsync(chatId);
+
+                // New user without a name: ask for the full name first, then continue to the receipt.
+                if (receiptUser == null || string.IsNullOrWhiteSpace(receiptUser.DisplayName))
+                {
+                    state.Step = ConversationStep.Name;
+                    state.PendingReceipt = true;
+
+                    await botClient.SendMessage(
+                        chatId,
+                        "خوش آمدید! لطفاً نام خود را وارد کنید (برای شناسایی رسید پرداخت):",
+                        cancellationToken: ct);
+
+                    return;
+                }
+
+                state.Step = ConversationStep.AwaitingReceiptPhoto;
+                state.PendingReceipt = false;
 
                 await botClient.SendMessage(
                     chatId,

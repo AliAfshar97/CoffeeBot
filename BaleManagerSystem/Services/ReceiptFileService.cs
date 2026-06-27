@@ -22,7 +22,7 @@ namespace BaleManagerSystem.Services
 
         public async Task<string?> SaveTelegramPhotoAsync(
             ITelegramBotClient botClient,
-            PhotoSize photo,
+            string fileId,
             int receiptId,
             CancellationToken cancellationToken = default)
         {
@@ -30,7 +30,7 @@ namespace BaleManagerSystem.Services
             {
                 EnsureReceiptsDirectory();
 
-                var file = await botClient.GetFile(photo.FileId, cancellationToken);
+                var file = await botClient.GetFile(fileId, cancellationToken);
 
                 if (string.IsNullOrEmpty(file.FilePath))
                     return null;
