@@ -174,7 +174,7 @@
                                 {
                                     <tr>
 
-                                        <td>@PersianLabels.Drink(order.DrinkType)</td>
+                                        <td>@(order.DrinkNamePersian ?? PersianLabels.Drink(order.DrinkType))</td>
 
                                         <td>@order.ShotCount</td>
 

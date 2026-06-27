@@ -75,6 +75,28 @@ BEGIN
 END
 GO
 
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = N'MenuItems')
+BEGIN
+    CREATE TABLE MenuItems
+    (
+        Id            INT IDENTITY(1,1) PRIMARY KEY,
+        ItemKey       NVARCHAR(50)  NOT NULL UNIQUE,
+        NamePersian   NVARCHAR(100) NOT NULL,
+        SupportsShots BIT NOT NULL DEFAULT 0,
+        Unit          NVARCHAR(20)  NOT NULL DEFAULT N'شات',
+        DisplayOrder  INT NOT NULL DEFAULT 0,
+        IsActive      BIT NOT NULL DEFAULT 1
+    );
+
+    INSERT INTO MenuItems (ItemKey, NamePersian, SupportsShots, Unit, DisplayOrder, IsActive) VALUES
+    ('Espresso',   N'اسپرسو',   1, N'شات',   1, 1),
+    ('Latte',      N'لاته',     1, N'شات',   2, 1),
+    ('Cappuccino', N'کاپوچینو', 1, N'شات',   3, 1),
+    ('Milk',       N'شیر',      1, N'لیوان', 4, 1),
+    ('Chocolate',  N'شکلات',    0, N'شات',   5, 1);
+END
+GO
+
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = N'BotUsers')
 BEGIN
     CREATE TABLE BotUsers

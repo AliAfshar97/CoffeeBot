@@ -47,16 +47,20 @@ namespace BaleManagerSystem.Services
 
             const string sql = @"
             SELECT
-                Id,
-                ChatId,
-                DisplayName,
-                DrinkType,
-                ShotCount,
-                WithChocolate,
-                PriceInToman,
-                CreatedAt
-            FROM CoffeeOrders
-            ORDER BY CreatedAt DESC";
+                o.Id,
+                o.ChatId,
+                o.DisplayName,
+                o.DrinkType,
+                o.ShotCount,
+                o.WithChocolate,
+                o.PriceInToman,
+                o.CreatedAt,
+                m.NamePersian   AS DrinkNamePersian,
+                m.Unit          AS Unit,
+                m.SupportsShots AS HasShots
+            FROM CoffeeOrders o
+            LEFT JOIN MenuItems m ON m.ItemKey = o.DrinkType
+            ORDER BY o.CreatedAt DESC";
 
             var result = await conn.QueryAsync<CoffeeOrder>(sql);
 
@@ -92,12 +96,16 @@ namespace BaleManagerSystem.Services
                     NULLIF(o.PriceInToman, 0),
                     p.PriceInToman,
                     0) AS PriceInToman,
-                o.CreatedAt
+                o.CreatedAt,
+                m.NamePersian   AS DrinkNamePersian,
+                m.Unit          AS Unit,
+                m.SupportsShots AS HasShots
             FROM CoffeeOrders o
             LEFT JOIN CoffeePrices p
                 ON p.DrinkType = o.DrinkType
                AND p.ShotCount = o.ShotCount
                AND p.WithChocolate = o.WithChocolate
+            LEFT JOIN MenuItems m ON m.ItemKey = o.DrinkType
             WHERE (@FromDate IS NULL OR o.CreatedAt >= @FromDate)
               AND (@ToDate IS NULL OR o.CreatedAt < @ToDate)
             ORDER BY o.DisplayName, o.CreatedAt DESC";
@@ -153,12 +161,16 @@ namespace BaleManagerSystem.Services
                     NULLIF(o.PriceInToman, 0),
                     p.PriceInToman,
                     0) AS PriceInToman,
-                o.CreatedAt
+                o.CreatedAt,
+                m.NamePersian   AS DrinkNamePersian,
+                m.Unit          AS Unit,
+                m.SupportsShots AS HasShots
             FROM CoffeeOrders o
             LEFT JOIN CoffeePrices p
                 ON p.DrinkType = o.DrinkType
                AND p.ShotCount = o.ShotCount
                AND p.WithChocolate = o.WithChocolate
+            LEFT JOIN MenuItems m ON m.ItemKey = o.DrinkType
             WHERE o.ChatId = @ChatId
               AND (@FromDate IS NULL OR o.CreatedAt >= @FromDate)
               AND (@ToDate IS NULL OR o.CreatedAt < @ToDate)

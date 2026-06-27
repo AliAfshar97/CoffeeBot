@@ -22,6 +22,8 @@ namespace BaleManagerSystem.Controllers
 
         private readonly ICoffeePriceRepository _priceRepository;
 
+        private readonly IMenuRepository _menuRepository;
+
         private readonly PaymentReportExcelExporter _excelExporter;
 
         private readonly IAccountRepository _accountRepository;
@@ -41,6 +43,7 @@ namespace BaleManagerSystem.Controllers
             IUserRepository userRepository,
             IOrderRepository orderRepository,
             ICoffeePriceRepository priceRepository,
+            IMenuRepository menuRepository,
             PaymentReportExcelExporter excelExporter,
             IAccountRepository accountRepository,
             AccountBalancesExcelExporter accountExcelExporter,
@@ -54,6 +57,7 @@ namespace BaleManagerSystem.Controllers
             _userRepository = userRepository;
             _orderRepository = orderRepository;
             _priceRepository = priceRepository;
+            _menuRepository = menuRepository;
             _excelExporter = excelExporter;
             _accountRepository = accountRepository;
             _accountExcelExporter = accountExcelExporter;
@@ -413,6 +417,154 @@ namespace BaleManagerSystem.Controllers
             vm.Prices = await _priceRepository.GetAllAsync();
 
             return View(vm);
+        }
+
+        // ================= MENU MANAGEMENT =================
+
+        private static readonly HashSet<string> ReservedItemKeys = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "menu_order", "menu_receipt", "shots_1", "shots_2", "choc_yes", "choc_no"
+        };
+
+        [HttpGet]
+        public async Task<IActionResult> Menu(int? editId)
+        {
+            var vm = new MenuPageViewModel
+            {
+                Items = await _menuRepository.GetAllAsync()
+            };
+
+            if (editId.HasValue)
+            {
+                var item = await _menuRepository.GetByIdAsync(editId.Value);
+
+                if (item != null)
+                {
+                    vm.IsEditing = true;
+                    vm.Form = await BuildFormFromItemAsync(item);
+                }
+            }
+            else
+            {
+                vm.Form = new MenuItemFormViewModel
+                {
+                    Unit = "شات",
+                    IsActive = true,
+                    DisplayOrder = vm.Items.Count + 1
+                };
+            }
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SaveMenuItem(MenuItemFormViewModel form)
+        {
+            form.ItemKey = (form.ItemKey ?? string.Empty).Trim();
+            form.NamePersian = (form.NamePersian ?? string.Empty).Trim();
+            form.Unit = string.IsNullOrWhiteSpace(form.Unit) ? "شات" : form.Unit.Trim();
+
+            if (ReservedItemKeys.Contains(form.ItemKey))
+            {
+                ModelState.AddModelError(nameof(form.ItemKey),
+                    "این شناسه رزرو شده است و قابل استفاده نیست.");
+            }
+
+            if (ModelState.IsValid &&
+                await _menuRepository.KeyExistsAsync(form.ItemKey, form.Id == 0 ? null : form.Id))
+            {
+                ModelState.AddModelError(nameof(form.ItemKey),
+                    "آیتمی با این شناسه از قبل وجود دارد.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var vm = new MenuPageViewModel
+                {
+                    Items = await _menuRepository.GetAllAsync(),
+                    Form = form,
+                    IsEditing = form.Id != 0
+                };
+
+                return View(nameof(Menu), vm);
+            }
+
+            var item = new MenuItem
+            {
+                Id = form.Id,
+                ItemKey = form.ItemKey,
+                NamePersian = form.NamePersian,
+                SupportsShots = form.SupportsShots,
+                Unit = form.Unit,
+                DisplayOrder = form.DisplayOrder,
+                IsActive = form.IsActive
+            };
+
+            if (form.Id == 0)
+            {
+                await _menuRepository.CreateAsync(item);
+            }
+            else
+            {
+                await _menuRepository.UpdateAsync(item);
+            }
+
+            await _priceRepository.SyncItemPricesAsync(item.ItemKey, item.SupportsShots);
+
+            // Persist the prices for the valid quantities only.
+            await _priceRepository.UpsertPriceAsync(item.ItemKey, 1, false, form.Price_1);
+
+            if (item.SupportsShots)
+            {
+                await _priceRepository.UpsertPriceAsync(item.ItemKey, 2, false, form.Price_2);
+            }
+
+            TempData["Message"] = form.Id == 0
+                ? "آیتم منو با موفقیت اضافه شد."
+                : "آیتم منو با موفقیت به‌روزرسانی شد.";
+
+            return RedirectToAction(nameof(Menu));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ToggleMenuItem(int id)
+        {
+            var item = await _menuRepository.GetByIdAsync(id);
+
+            if (item == null)
+            {
+                TempData["Error"] = "آیتم یافت نشد.";
+                return RedirectToAction(nameof(Menu));
+            }
+
+            await _menuRepository.SetActiveAsync(id, !item.IsActive);
+
+            TempData["Message"] = item.IsActive
+                ? "آیتم غیرفعال شد و دیگر در ربات نمایش داده نمی‌شود."
+                : "آیتم فعال شد.";
+
+            return RedirectToAction(nameof(Menu));
+        }
+
+        private async Task<MenuItemFormViewModel> BuildFormFromItemAsync(MenuItem item)
+        {
+            var prices = await _priceRepository.GetByDrinkAsync(item.ItemKey);
+
+            int PriceOf(byte shot, bool choc) =>
+                prices.FirstOrDefault(p => p.ShotCount == shot && p.WithChocolate == choc)?.PriceInToman ?? 0;
+
+            return new MenuItemFormViewModel
+            {
+                Id = item.Id,
+                ItemKey = item.ItemKey,
+                NamePersian = item.NamePersian,
+                SupportsShots = item.SupportsShots,
+                Unit = item.Unit,
+                DisplayOrder = item.DisplayOrder,
+                IsActive = item.IsActive,
+                Price_1 = PriceOf(1, false),
+                Price_2 = PriceOf(2, false)
+            };
         }
 
         [HttpGet]

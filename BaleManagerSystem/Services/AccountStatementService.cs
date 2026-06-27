@@ -64,18 +64,16 @@ namespace BaleManagerSystem.Services
 
         private static string FormatOrderLine(CoffeeOrder order)
         {
-            var drink = PersianLabels.Drink(order.DrinkType);
+            var drink = order.DrinkNamePersian ?? PersianLabels.Drink(order.DrinkType);
+            var unit = string.IsNullOrWhiteSpace(order.Unit) ? "شات" : order.Unit;
 
-            if (order.DrinkType == "Chocolate")
+            if (!order.HasShots)
                 return $"{drink} — {order.PriceInToman:N0} تومان";
 
-            if (order.DrinkType == "Milk")
-            {
-                return $"{drink} — {order.ShotCount} لیوان — {order.PriceInToman:N0} تومان";
-            }
-
+            // Historical orders may still carry a chocolate add-on.
             var chocolate = order.WithChocolate ? " با شکلات" : string.Empty;
-            return $"{drink} — {order.ShotCount} شات{chocolate} — {order.PriceInToman:N0} تومان";
+
+            return $"{drink} — {order.ShotCount} {unit}{chocolate} — {order.PriceInToman:N0} تومان";
         }
     }
 }

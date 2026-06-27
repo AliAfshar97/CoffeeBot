@@ -79,7 +79,7 @@
 
                             <td>
                                 <span class="badge bg-primary">
-                                    @PersianLabels.Drink(item.DrinkType)
+                                    @(item.DrinkNamePersian ?? PersianLabels.Drink(item.DrinkType))
                                 </span>
                             </td>
 

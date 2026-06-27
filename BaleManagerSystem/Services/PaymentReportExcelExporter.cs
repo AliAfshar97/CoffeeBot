@@ -91,7 +91,7 @@ namespace BaleManagerSystem.Services
                 {
                     sheet.Cell(row, 1).Value = person.DisplayName;
                     sheet.Cell(row, 2).Value = person.ChatId;
-                    sheet.Cell(row, 3).Value = PersianLabels.Drink(order.DrinkType);
+                    sheet.Cell(row, 3).Value = order.DrinkNamePersian ?? PersianLabels.Drink(order.DrinkType);
                     sheet.Cell(row, 4).Value = order.ShotCount;
                     sheet.Cell(row, 5).Value = PersianLabels.YesNo(order.WithChocolate);
                     sheet.Cell(row, 6).Value = order.PriceInToman;

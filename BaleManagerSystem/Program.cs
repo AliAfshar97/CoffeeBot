@@ -57,6 +57,8 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
 builder.Services.AddScoped<ICoffeePriceRepository, CoffeePriceRepository>();
 
+builder.Services.AddScoped<IMenuRepository, MenuRepository>();
+
 builder.Services.AddScoped<PaymentReportExcelExporter>();
 
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();

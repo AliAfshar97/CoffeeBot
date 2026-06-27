@@ -17,5 +17,13 @@ namespace BaleManagerSystem.Models
         public int PriceInToman { get; set; }
 
         public DateTime CreatedAt { get; set; }
+
+        // Display-only fields resolved from MenuItems when reading orders.
+        // Null when the order's item no longer exists in the menu.
+        public string? DrinkNamePersian { get; set; }
+
+        public string? Unit { get; set; }
+
+        public bool HasShots { get; set; }
     }
 }

@@ -1,0 +1,235 @@
+@model BaleManagerSystem.Models.ViewModels.MenuPageViewModel
+
+@{
+    ViewData["Title"] = "مدیریت منو";
+}
+
+<div class="card shadow-lg border-0 rounded-4 mb-4">
+
+    <div class="card-body p-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+
+                <h2 class="fw-bold">
+                    <i class="bi bi-list-ul text-primary"></i>
+                    مدیریت منو
+                </h2>
+
+                <p class="text-muted mb-0">
+                    آیتم‌های منو را تعریف کنید: نام، گزینه شات/لیوان، افزودنی شکلات و قیمت‌ها.
+                </p>
+
+            </div>
+
+        </div>
+
+        @if (TempData["Message"] != null)
+        {
+            <div class="alert alert-success">@TempData["Message"]</div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">@TempData["Error"]</div>
+        }
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>ترتیب</th>
+                        <th>نام</th>
+                        <th>شناسه</th>
+                        <th>شات/لیوان</th>
+                        <th>واحد</th>
+                        <th>وضعیت</th>
+                        <th style="width: 170px;"></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.DisplayOrder</td>
+                            <td>@item.NamePersian</td>
+                            <td><code>@item.ItemKey</code></td>
+                            <td>@PersianLabels.YesNo(item.SupportsShots)</td>
+                            <td>@item.Unit</td>
+                            <td>
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge bg-success">فعال</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">غیرفعال</span>
+                                }
+                            </td>
+                            <td>
+                                <a asp-action="Menu"
+                                   asp-route-editId="@item.Id"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i>
+                                    ویرایش
+                                </a>
+
+                                <form asp-action="ToggleMenuItem"
+                                      method="post"
+                                      class="d-inline">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit"
+                                            class="btn btn-sm @(item.IsActive ? "btn-outline-secondary" : "btn-outline-success")">
+                                        @(item.IsActive ? "غیرفعال" : "فعال")
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+
+                    @if (!Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">
+                                هنوز آیتمی تعریف نشده است.
+                            </td>
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card shadow-lg border-0 rounded-4">
+
+    <div class="card-body p-4">
+
+        <h4 class="fw-bold mb-4">
+            <i class="bi bi-plus-circle text-primary"></i>
+            @(Model.IsEditing ? "ویرایش آیتم" : "افزودن آیتم جدید")
+        </h4>
+
+        <form asp-action="SaveMenuItem" method="post" id="menuForm">
+
+            <input type="hidden" asp-for="Form.Id" />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+                    <label class="form-label">نام نمایشی (فارسی)</label>
+                    <input asp-for="Form.NamePersian" class="form-control" placeholder="مثلاً موکا" />
+                    <span asp-validation-for="Form.NamePersian" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">شناسه (انگلیسی، یکتا)</label>
+                    <input asp-for="Form.ItemKey"
+                           class="form-control"
+                           placeholder="Mocha"
+                           readonly="@(Model.IsEditing)" />
+                    <span asp-validation-for="Form.ItemKey" class="text-danger"></span>
+                    <small class="text-muted">فقط حروف انگلیسی، عدد و _ . پس از ساخت قابل تغییر نیست.</small>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">واحد</label>
+                    <input asp-for="Form.Unit" class="form-control" placeholder="شات" />
+                    <span asp-validation-for="Form.Unit" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">ترتیب نمایش</label>
+                    <input asp-for="Form.DisplayOrder" type="number" class="form-control" />
+                </div>
+
+            </div>
+
+            <div class="row g-3 mt-1">
+
+                <div class="col-md-4">
+                    <div class="form-check form-switch">
+                        <input asp-for="Form.SupportsShots" class="form-check-input" id="supportsShots" />
+                        <label class="form-check-label" for="supportsShots">گزینه ۱/۲ (شات یا لیوان) دارد</label>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-check form-switch">
+                        <input asp-for="Form.IsActive" class="form-check-input" id="isActive" />
+                        <label class="form-check-label" for="isActive">فعال (در ربات نمایش داده شود)</label>
+                    </div>
+                </div>
+
+            </div>
+
+            <hr class="my-4" />
+
+            <h6 class="fw-bold mb-3">قیمت‌ها (تومان)</h6>
+
+            <div class="row g-3">
+
+                <div class="col-md-3">
+                    <label class="form-label" id="lbl_1">قیمت پایه</label>
+                    <input asp-for="Form.Price_1" type="number" min="0" class="form-control" />
+                </div>
+
+                <div class="col-md-3 price-cell" data-need="shots">
+                    <label class="form-label" id="lbl_2">قیمت ۲ واحد</label>
+                    <input asp-for="Form.Price_2" type="number" min="0" class="form-control" />
+                </div>
+
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary btn-modern">
+                    <i class="bi bi-save"></i>
+                    @(Model.IsEditing ? "ذخیره تغییرات" : "افزودن آیتم")
+                </button>
+
+                @if (Model.IsEditing)
+                {
+                    <a asp-action="Menu" class="btn btn-outline-secondary btn-modern">انصراف</a>
+                }
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function refreshPriceCells() {
+            const shots = document.getElementById("supportsShots").checked;
+            const unit = document.querySelector('[name="Form.Unit"]').value || "واحد";
+
+            document.querySelector('[data-need="shots"]').style.display = shots ? "" : "none";
+
+            document.getElementById("lbl_1").innerText =
+                shots ? ("قیمت ۱ " + unit) : "قیمت پایه";
+            document.getElementById("lbl_2").innerText = "قیمت ۲ " + unit;
+        }
+
+        document.getElementById("supportsShots").addEventListener("change", refreshPriceCells);
+        document.querySelector('[name="Form.Unit"]').addEventListener("keyup", refreshPriceCells);
+
+        refreshPriceCells();
+    </script>
+}
