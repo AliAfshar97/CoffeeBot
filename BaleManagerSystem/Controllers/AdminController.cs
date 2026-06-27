@@ -391,7 +391,8 @@ namespace BaleManagerSystem.Controllers
 
         private static readonly HashSet<string> ReservedItemKeys = new(StringComparer.OrdinalIgnoreCase)
         {
-            "menu_order", "menu_receipt", "shots_1", "shots_2", "choc_yes", "choc_no"
+            "menu_order", "menu_receipt", "shots_1", "shots_2", "choc_yes", "choc_no",
+            "order_more", "order_done"
         };
 
         [HttpGet]

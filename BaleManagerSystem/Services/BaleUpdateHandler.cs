@@ -263,26 +263,24 @@ namespace BaleManagerSystem.Services
 
             if (data == "menu_order")
             {
-                var orderingUser = await _users.GetUserByChatIdAsync(chatId);
-                var menu = await _menu.GetActiveForSubscriberAsync(
-                    orderingUser?.IsSubscriber ?? false);
+                // Start of a new ordering session: reset the running totals.
+                var state = _states.GetOrCreate(chatId);
+                state.SessionItemCount = 0;
+                state.SessionTotalToman = 0;
 
-                if (menu.Count == 0)
-                {
-                    await botClient.SendMessage(
-                        chatId,
-                        "در حال حاضر آیتمی در منو موجود نیست.",
-                        cancellationToken: ct);
+                await ShowDrinkMenuAsync(botClient, chatId, "خیلی ام عالی دوست من! خوشحالیم اینجایی چی میل داری؟", ct);
+                return;
+            }
 
-                    return;
-                }
+            if (data == "order_more")
+            {
+                await ShowDrinkMenuAsync(botClient, chatId, "بسیار عالی! آیتم بعدی را انتخاب کنید:", ct);
+                return;
+            }
 
-                await botClient.SendMessage(
-                    chatId,
-                    "خیلی ام عالی دوست من! خوشحالیم اینجایی چی میل داری؟",
-                    replyMarkup: BuildDrinkMenu(menu),
-                    cancellationToken: ct);
-
+            if (data == "order_done")
+            {
+                await FinishOrderSessionAsync(botClient, chatId, ct);
                 return;
             }
 
@@ -460,6 +458,66 @@ namespace BaleManagerSystem.Services
                 cancellationToken: ct);
 
             await NotifyAdminAsync(botClient, order, item);
+
+            // Accumulate the running session totals and reset the per-item selection.
+            state.SessionItemCount += 1;
+            state.SessionTotalToman += price;
+            state.DrinkType = string.Empty;
+            state.ShotCount = 0;
+            state.Step = ConversationStep.None;
+
+            await botClient.SendMessage(
+                chatId,
+                "آیا مایل به انتخاب آیتم دیگری هستید؟",
+                replyMarkup: BuildAddMoreMenu(),
+                cancellationToken: ct);
+        }
+
+        private async Task ShowDrinkMenuAsync(
+            ITelegramBotClient botClient,
+            long chatId,
+            string prompt,
+            CancellationToken ct)
+        {
+            var user = await _users.GetUserByChatIdAsync(chatId);
+            var menu = await _menu.GetActiveForSubscriberAsync(user?.IsSubscriber ?? false);
+
+            if (menu.Count == 0)
+            {
+                await botClient.SendMessage(
+                    chatId,
+                    "در حال حاضر آیتمی در منو موجود نیست.",
+                    cancellationToken: ct);
+
+                return;
+            }
+
+            await botClient.SendMessage(
+                chatId,
+                prompt,
+                replyMarkup: BuildDrinkMenu(menu),
+                cancellationToken: ct);
+        }
+
+        private async Task FinishOrderSessionAsync(
+            ITelegramBotClient botClient,
+            long chatId,
+            CancellationToken ct)
+        {
+            var count = 0;
+            var total = 0;
+
+            if (_states.TryGet(chatId, out var state) && state != null)
+            {
+                count = state.SessionItemCount;
+                total = state.SessionTotalToman;
+            }
+
+            var message = count > 0
+                ? $"سفارش شما تکمیل شد!\n\nتعداد آیتم: {count}\nجمع کل: {total:N0} تومان\n\nبرای منوی اصلی /start را ارسال کنید."
+                : "سفارشی ثبت نشد.\n\nبرای منوی اصلی /start را ارسال کنید.";
+
+            await botClient.SendMessage(chatId, message, cancellationToken: ct);
 
             _states.Remove(chatId);
         }
@@ -647,6 +705,21 @@ namespace BaleManagerSystem.Services
             }
 
             return new InlineKeyboardMarkup(rows);
+        }
+
+        private static InlineKeyboardMarkup BuildAddMoreMenu()
+        {
+            return new InlineKeyboardMarkup(new[]
+            {
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("بله، آیتم دیگر", "order_more")
+                },
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("خیر، همین کافیه", "order_done")
+                }
+            });
         }
 
         private static InlineKeyboardMarkup BuildQuantityMenu(string unit)
