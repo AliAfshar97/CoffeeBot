@@ -1,0 +1,137 @@
+@model List<BaleManagerSystem.Models.ChatUser>
+
+@{
+    ViewData["Title"] = "کاربران";
+    var subscriberCount = Model.Count(u => u.IsSubscriber);
+}
+
+<div class="card shadow-lg border-0 rounded-4">
+
+    <div class="card-body p-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+
+                <h2 class="fw-bold">
+                    <i class="bi bi-people-fill text-primary"></i>
+                    کاربران
+                </h2>
+
+                <p class="text-muted mb-0">
+                    وضعیت اشتراک هر کاربر را تعیین کنید. آیتم‌های منو بر اساس همین وضعیت در ربات نمایش داده می‌شوند.
+                </p>
+
+            </div>
+
+        </div>
+
+        @if (TempData["Message"] != null)
+        {
+            <div class="alert alert-success">@TempData["Message"]</div>
+        }
+
+        <div class="row g-3 mb-4">
+
+            <div class="col-md-4">
+                <div class="p-3 bg-light rounded-4">
+                    <div class="text-muted small">کل کاربران</div>
+                    <div class="fs-3 fw-bold">@Model.Count</div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="p-3 bg-light rounded-4">
+                    <div class="text-muted small">مشترکین</div>
+                    <div class="fs-3 fw-bold text-success">@subscriberCount</div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="p-3 bg-light rounded-4">
+                    <div class="text-muted small">غیرمشترکین</div>
+                    <div class="fs-3 fw-bold">@(Model.Count - subscriberCount)</div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="mb-3">
+            <input type="text" id="searchBox" class="form-control" placeholder="جستجو..." />
+        </div>
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle" id="usersTable">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>نام</th>
+                        <th>نام کاربری</th>
+                        <th>شناسه چت</th>
+                        <th>وضعیت</th>
+                        <th>اولین مراجعه</th>
+                        <th style="width: 160px;"></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var user in Model)
+                    {
+                        <tr>
+                            <td>@(string.IsNullOrWhiteSpace(user.DisplayName) ? "—" : user.DisplayName)</td>
+                            <td>@(string.IsNullOrWhiteSpace(user.Username) ? "—" : user.Username)</td>
+                            <td>@user.ChatId</td>
+                            <td>
+                                @if (user.IsSubscriber)
+                                {
+                                    <span class="badge bg-success">مشترک</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">غیرمشترک</span>
+                                }
+                            </td>
+                            <td>@user.FirstSeen.ToString("yyyy-MM-dd")</td>
+                            <td>
+                                <form asp-action="SetSubscription" method="post" class="d-inline">
+                                    <input type="hidden" name="chatId" value="@user.ChatId" />
+                                    <input type="hidden" name="isSubscriber" value="@((!user.IsSubscriber).ToString().ToLower())" />
+                                    <button type="submit"
+                                            class="btn btn-sm @(user.IsSubscriber ? "btn-outline-secondary" : "btn-outline-success")">
+                                        @(user.IsSubscriber ? "لغو اشتراک" : "ثبت اشتراک")
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">هنوز کاربری ثبت نشده است.</td>
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts
+{
+    <script>
+        document.getElementById("searchBox").addEventListener("keyup", function () {
+            const filter = this.value.toLowerCase();
+            document.querySelectorAll("#usersTable tbody tr").forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(filter) ? "" : "none";
+            });
+        });
+    </script>
+}

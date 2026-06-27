@@ -14,6 +14,16 @@ namespace BaleManagerSystem.Localization
 
         public static string YesNo(bool value) => value ? "بله" : "خیر";
 
+        public static string Subscription(bool isSubscriber) =>
+            isSubscriber ? "مشترک" : "غیرمشترک";
+
+        public static string Visibility(Models.MenuVisibility visibility) => visibility switch
+        {
+            Models.MenuVisibility.SubscribersOnly => "فقط مشترکین",
+            Models.MenuVisibility.NonSubscribersOnly => "فقط غیرمشترکین",
+            _ => "همه"
+        };
+
         public static string TransactionType(string type) => type switch
         {
             "Debit" => "بدهکار",

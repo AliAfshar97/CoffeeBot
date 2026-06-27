@@ -14,11 +14,12 @@ IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = N'BotUserTransactions')
 BEGIN
     CREATE TABLE BotUserTransactions
     (
-        Id          INT IDENTITY(1,1) PRIMARY KEY,
-        ChatId      BIGINT NOT NULL UNIQUE,
-        Username    NVARCHAR(100) NULL,
-        DisplayName NVARCHAR(100) NULL,
-        FirstSeen   DATETIME2 NOT NULL DEFAULT GETDATE()
+        Id           INT IDENTITY(1,1) PRIMARY KEY,
+        ChatId       BIGINT NOT NULL UNIQUE,
+        Username     NVARCHAR(100) NULL,
+        DisplayName  NVARCHAR(100) NULL,
+        IsSubscriber BIT NOT NULL DEFAULT 0,
+        FirstSeen    DATETIME2 NOT NULL DEFAULT GETDATE()
     );
 END
 GO
@@ -85,6 +86,7 @@ BEGIN
         SupportsShots BIT NOT NULL DEFAULT 0,
         Unit          NVARCHAR(20)  NOT NULL DEFAULT N'شات',
         DisplayOrder  INT NOT NULL DEFAULT 0,
+        Visibility    INT NOT NULL DEFAULT 0,
         IsActive      BIT NOT NULL DEFAULT 1
     );
 

@@ -24,6 +24,8 @@ namespace BaleManagerSystem.Models.ViewModels
 
         public int DisplayOrder { get; set; }
 
+        public MenuVisibility Visibility { get; set; } = MenuVisibility.Both;
+
         public bool IsActive { get; set; } = true;
 
         // Price inputs (in Toman). Price_2 is only used when SupportsShots is true.

@@ -10,6 +10,9 @@ namespace BaleManagerSystem.Services
         // Active items ordered for display (bot menu).
         Task<List<MenuItem>> GetActiveOrderedAsync();
 
+        // Active items visible to a user, based on their subscription status.
+        Task<List<MenuItem>> GetActiveForSubscriberAsync(bool isSubscriber);
+
         Task<MenuItem?> GetByIdAsync(int id);
 
         Task<MenuItem?> GetByKeyAsync(string itemKey);

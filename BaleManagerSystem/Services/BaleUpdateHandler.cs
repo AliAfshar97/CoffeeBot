@@ -229,7 +229,9 @@ namespace BaleManagerSystem.Services
 
             if (data == "menu_order")
             {
-                var menu = await _menu.GetActiveOrderedAsync();
+                var orderingUser = await _users.GetUserByChatIdAsync(chatId);
+                var menu = await _menu.GetActiveForSubscriberAsync(
+                    orderingUser?.IsSubscriber ?? false);
 
                 if (menu.Count == 0)
                 {
@@ -294,12 +296,19 @@ namespace BaleManagerSystem.Services
 
             if (selectedItem is { IsActive: true })
             {
+                var user = await _users.GetUserByChatIdAsync(chatId);
+                var isSubscriber = user?.IsSubscriber ?? false;
+
+                if (!IsVisibleTo(selectedItem, isSubscriber))
+                {
+                    await SendUnavailableItemAsync(botClient, chatId, ct);
+                    return;
+                }
+
                 var state = _states.GetOrCreate(chatId);
                 state.DrinkType = selectedItem.ItemKey;
                 state.ShotCount = 0;
                 state.Step = ConversationStep.None;
-
-                var user = await _users.GetUserByChatIdAsync(chatId);
 
                 if (user == null || string.IsNullOrWhiteSpace(user.DisplayName))
                 {
@@ -428,6 +437,11 @@ namespace BaleManagerSystem.Services
                 replyMarkup: BuildMainMenu(),
                 cancellationToken: ct);
         }
+
+        private static bool IsVisibleTo(MenuItem item, bool isSubscriber) =>
+            item.Visibility == MenuVisibility.Both ||
+            (item.Visibility == MenuVisibility.SubscribersOnly && isSubscriber) ||
+            (item.Visibility == MenuVisibility.NonSubscribersOnly && !isSubscriber);
 
         private static string BuildQuantityPrompt(
             string displayName,

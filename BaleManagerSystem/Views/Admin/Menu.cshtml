@@ -46,6 +46,7 @@
                         <th>شناسه</th>
                         <th>شات/لیوان</th>
                         <th>واحد</th>
+                        <th>نمایش برای</th>
                         <th>وضعیت</th>
                         <th style="width: 170px;"></th>
                     </tr>
@@ -61,6 +62,7 @@
                             <td><code>@item.ItemKey</code></td>
                             <td>@PersianLabels.YesNo(item.SupportsShots)</td>
                             <td>@item.Unit</td>
+                            <td>@PersianLabels.Visibility(item.Visibility)</td>
                             <td>
                                 @if (item.IsActive)
                                 {
@@ -95,7 +97,7 @@
                     @if (!Model.Items.Any())
                     {
                         <tr>
-                            <td colspan="7" class="text-center text-muted">
+                            <td colspan="8" class="text-center text-muted">
                                 هنوز آیتمی تعریف نشده است.
                             </td>
                         </tr>
@@ -153,6 +155,15 @@
                 <div class="col-md-2">
                     <label class="form-label">ترتیب نمایش</label>
                     <input asp-for="Form.DisplayOrder" type="number" class="form-control" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">نمایش برای</label>
+                    <select asp-for="Form.Visibility" class="form-select">
+                        <option value="Both">همه کاربران</option>
+                        <option value="SubscribersOnly">فقط مشترکین</option>
+                        <option value="NonSubscribersOnly">فقط غیرمشترکین</option>
+                    </select>
                 </div>
 
             </div>

@@ -8,6 +8,8 @@ namespace BaleManagerSystem.Models
 
         public string? DisplayName { get; set; }
 
+        public bool IsSubscriber { get; set; }
+
         public DateTime FirstSeen { get; set; }
     }
 }

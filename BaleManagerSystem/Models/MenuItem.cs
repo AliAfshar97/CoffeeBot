@@ -17,6 +17,9 @@ namespace BaleManagerSystem.Models
 
         public int DisplayOrder { get; set; }
 
+        // Which subscription group sees this item in the bot.
+        public MenuVisibility Visibility { get; set; } = MenuVisibility.Both;
+
         public bool IsActive { get; set; } = true;
     }
 }

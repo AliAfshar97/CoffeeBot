@@ -14,5 +14,9 @@ namespace BaleManagerSystem.Services
         Task UpdateDisplayNameAsync(long chatId, string displayName);
 
         Task<List<UserChatIdViewModel>> GetAllChatIds();
+
+        Task<List<ChatUser>> GetAllUsersAsync();
+
+        Task SetSubscriptionAsync(long chatId, bool isSubscriber);
     }
 }

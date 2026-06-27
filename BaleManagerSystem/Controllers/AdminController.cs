@@ -497,6 +497,7 @@ namespace BaleManagerSystem.Controllers
                 SupportsShots = form.SupportsShots,
                 Unit = form.Unit,
                 DisplayOrder = form.DisplayOrder,
+                Visibility = form.Visibility,
                 IsActive = form.IsActive
             };
 
@@ -546,6 +547,28 @@ namespace BaleManagerSystem.Controllers
             return RedirectToAction(nameof(Menu));
         }
 
+        // ================= BOT USERS (SUBSCRIPTION) =================
+
+        [HttpGet]
+        public async Task<IActionResult> Users()
+        {
+            var users = await _userRepository.GetAllUsersAsync();
+
+            return View(users);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SetSubscription(long chatId, bool isSubscriber)
+        {
+            await _userRepository.SetSubscriptionAsync(chatId, isSubscriber);
+
+            TempData["Message"] = isSubscriber
+                ? "کاربر به‌عنوان مشترک ثبت شد."
+                : "اشتراک کاربر برداشته شد.";
+
+            return RedirectToAction(nameof(Users));
+        }
+
         private async Task<MenuItemFormViewModel> BuildFormFromItemAsync(MenuItem item)
         {
             var prices = await _priceRepository.GetByDrinkAsync(item.ItemKey);
@@ -561,6 +584,7 @@ namespace BaleManagerSystem.Controllers
                 SupportsShots = item.SupportsShots,
                 Unit = item.Unit,
                 DisplayOrder = item.DisplayOrder,
+                Visibility = item.Visibility,
                 IsActive = item.IsActive,
                 Price_1 = PriceOf(1, false),
                 Price_2 = PriceOf(2, false)

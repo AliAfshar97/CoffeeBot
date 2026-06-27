@@ -58,7 +58,7 @@ namespace BaleManagerSystem.Services
             await conn.OpenAsync();
 
             var cmd = new SqlCommand(@"
-            SELECT ChatId, Username, DisplayName, FirstSeen
+            SELECT ChatId, Username, DisplayName, IsSubscriber, FirstSeen
             FROM BotUserTransactions
             WHERE ChatId = @ChatId
             ", conn);
@@ -79,8 +79,64 @@ namespace BaleManagerSystem.Services
                 DisplayName = reader.IsDBNull(reader.GetOrdinal("DisplayName"))
                     ? null
                     : reader.GetString(reader.GetOrdinal("DisplayName")),
+                IsSubscriber = reader.GetBoolean(reader.GetOrdinal("IsSubscriber")),
                 FirstSeen = reader.GetDateTime(reader.GetOrdinal("FirstSeen"))
             };
+        }
+
+        public async Task<List<ChatUser>> GetAllUsersAsync()
+        {
+            var users = new List<ChatUser>();
+
+            using var conn = new SqlConnection(
+                _configuration.GetConnectionString("SaleBotManagerDB"));
+
+            await conn.OpenAsync();
+
+            var cmd = new SqlCommand(@"
+            SELECT ChatId, Username, DisplayName, IsSubscriber, FirstSeen
+            FROM BotUserTransactions
+            ORDER BY IsSubscriber DESC, DisplayName, FirstSeen DESC
+            ", conn);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                users.Add(new ChatUser
+                {
+                    ChatId = reader.GetInt64(reader.GetOrdinal("ChatId")),
+                    Username = reader.IsDBNull(reader.GetOrdinal("Username"))
+                        ? string.Empty
+                        : reader.GetString(reader.GetOrdinal("Username")),
+                    DisplayName = reader.IsDBNull(reader.GetOrdinal("DisplayName"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("DisplayName")),
+                    IsSubscriber = reader.GetBoolean(reader.GetOrdinal("IsSubscriber")),
+                    FirstSeen = reader.GetDateTime(reader.GetOrdinal("FirstSeen"))
+                });
+            }
+
+            return users;
+        }
+
+        public async Task SetSubscriptionAsync(long chatId, bool isSubscriber)
+        {
+            using var conn = new SqlConnection(
+                _configuration.GetConnectionString("SaleBotManagerDB"));
+
+            await conn.OpenAsync();
+
+            var cmd = new SqlCommand(@"
+            UPDATE BotUserTransactions
+            SET IsSubscriber = @IsSubscriber
+            WHERE ChatId = @ChatId
+            ", conn);
+
+            cmd.Parameters.AddWithValue("@ChatId", chatId);
+            cmd.Parameters.AddWithValue("@IsSubscriber", isSubscriber);
+
+            await cmd.ExecuteNonQueryAsync();
         }
 
         public async Task UpdateDisplayNameAsync(long chatId, string displayName)

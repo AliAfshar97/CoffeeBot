@@ -17,7 +17,7 @@ namespace BaleManagerSystem.Services
             _configuration.GetConnectionString("SaleBotManagerDB")!;
 
         private const string SelectColumns = @"
-            Id, ItemKey, NamePersian, SupportsShots, Unit, DisplayOrder, IsActive";
+            Id, ItemKey, NamePersian, SupportsShots, Unit, DisplayOrder, Visibility, IsActive";
 
         public async Task<List<MenuItem>> GetAllAsync()
         {
@@ -44,6 +44,27 @@ namespace BaleManagerSystem.Services
             ORDER BY DisplayOrder, NamePersian";
 
             var result = await conn.QueryAsync<MenuItem>(sql);
+
+            return result.ToList();
+        }
+
+        public async Task<List<MenuItem>> GetActiveForSubscriberAsync(bool isSubscriber)
+        {
+            using var conn = new SqlConnection(ConnectionString);
+
+            // Visibility: 0 = both, 1 = subscribers only, 2 = non-subscribers only.
+            var sql = $@"
+            SELECT {SelectColumns}
+            FROM MenuItems
+            WHERE IsActive = 1
+              AND (
+                    Visibility = 0
+                 OR (Visibility = 1 AND @IsSubscriber = 1)
+                 OR (Visibility = 2 AND @IsSubscriber = 0)
+                  )
+            ORDER BY DisplayOrder, NamePersian";
+
+            var result = await conn.QueryAsync<MenuItem>(sql, new { IsSubscriber = isSubscriber });
 
             return result.ToList();
         }
@@ -97,9 +118,9 @@ namespace BaleManagerSystem.Services
 
             const string sql = @"
             INSERT INTO MenuItems
-                (ItemKey, NamePersian, SupportsShots, Unit, DisplayOrder, IsActive)
+                (ItemKey, NamePersian, SupportsShots, Unit, DisplayOrder, Visibility, IsActive)
             VALUES
-                (@ItemKey, @NamePersian, @SupportsShots, @Unit, @DisplayOrder, @IsActive);
+                (@ItemKey, @NamePersian, @SupportsShots, @Unit, @DisplayOrder, @Visibility, @IsActive);
             SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
             return await conn.ExecuteScalarAsync<int>(sql, item);
@@ -115,6 +136,7 @@ namespace BaleManagerSystem.Services
                 SupportsShots = @SupportsShots,
                 Unit          = @Unit,
                 DisplayOrder  = @DisplayOrder,
+                Visibility    = @Visibility,
                 IsActive      = @IsActive
             WHERE Id = @Id";
 
