@@ -24,6 +24,10 @@ namespace BaleManagerSystem.Services
             int? receiptId,
             string? createdBy);
 
+        Task UpdateOrderDebitAsync(int orderId, int newAmount, string newDescription);
+
+        Task DeleteOrderDebitAsync(int orderId);
+
         Task<AccountsPageViewModel> GetAccountsAsync(
             DateTime? fromDate,
             DateTime? toDate);

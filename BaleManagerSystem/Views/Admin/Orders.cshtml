@@ -31,6 +31,16 @@
 
         </div>
 
+        @if (TempData["Message"] != null)
+        {
+            <div class="alert alert-success">@TempData["Message"]</div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">@TempData["Error"]</div>
+        }
+
         <div class="mb-3">
 
             <input type="text"
@@ -61,6 +71,8 @@
 
                         <th>تاریخ</th>
 
+                        <th style="width: 150px;">عملیات</th>
+
                     </tr>
 
                 </thead>
@@ -87,6 +99,26 @@
 
                             <td>
                                 @item.CreatedAt
+                            </td>
+
+                            <td>
+                                <a asp-action="EditOrder"
+                                   asp-route-id="@item.Id"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i>
+                                    اصلاح
+                                </a>
+
+                                <form asp-action="DeleteOrder"
+                                      method="post"
+                                      class="d-inline"
+                                      onsubmit="return confirm('این سفارش و بدهکاری مربوطه حذف شود؟');">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                        حذف
+                                    </button>
+                                </form>
                             </td>
 
                         </tr>

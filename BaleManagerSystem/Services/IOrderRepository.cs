@@ -9,6 +9,12 @@ namespace BaleManagerSystem.Services
 
         Task<List<CoffeeOrder>> GetOrdersAsync();
 
+        Task<CoffeeOrder?> GetOrderByIdAsync(int id);
+
+        Task UpdateOrderAsync(CoffeeOrder order);
+
+        Task DeleteOrderAsync(int id);
+
         Task<int> GetOrderCountAsync();
 
         Task<PaymentReportViewModel> GetPaymentReportAsync(

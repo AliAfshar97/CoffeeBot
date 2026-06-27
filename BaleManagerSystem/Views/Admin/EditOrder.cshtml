@@ -1,0 +1,74 @@
+@model BaleManagerSystem.Models.ViewModels.EditOrderViewModel
+
+@{
+    ViewData["Title"] = "اصلاح سفارش";
+}
+
+<div class="card shadow-lg border-0 rounded-4">
+
+    <div class="card-body p-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+
+                <h2 class="fw-bold">
+                    <i class="bi bi-pencil-square text-primary"></i>
+                    اصلاح سفارش #@Model.Id
+                </h2>
+
+                <p class="text-muted mb-0">
+                    کاربر: @Model.DisplayName (@Model.ChatId) | تاریخ ثبت: @Model.CreatedAt
+                </p>
+
+            </div>
+
+        </div>
+
+        <form asp-action="EditOrder" method="post">
+
+            <input type="hidden" asp-for="Id" />
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+                    <label class="form-label">نوشیدنی</label>
+                    <select asp-for="DrinkType" class="form-select">
+                        @foreach (var item in Model.MenuItems)
+                        {
+                            <option value="@item.ItemKey">@item.NamePersian</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">تعداد (شات/لیوان)</label>
+                    <input asp-for="ShotCount" type="number" min="1" class="form-control" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">مبلغ (تومان)</label>
+                    <input asp-for="PriceInToman" type="number" min="0" class="form-control" />
+                </div>
+
+            </div>
+
+            <div class="alert alert-warning mt-4 mb-0">
+                <i class="bi bi-info-circle"></i>
+                با ذخیره‌ی تغییرات، بدهکاری مربوط به این سفارش در حساب کاربر نیز به‌روزرسانی می‌شود.
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary btn-modern">
+                    <i class="bi bi-save"></i>
+                    ذخیره تغییرات
+                </button>
+
+                <a asp-action="Orders" class="btn btn-outline-secondary btn-modern">انصراف</a>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>

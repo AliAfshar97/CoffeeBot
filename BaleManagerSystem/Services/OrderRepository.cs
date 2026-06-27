@@ -67,6 +67,61 @@ namespace BaleManagerSystem.Services
             return result.ToList();
         }
 
+        public async Task<CoffeeOrder?> GetOrderByIdAsync(int id)
+        {
+            using var conn = new SqlConnection(ConnectionString);
+
+            const string sql = @"
+            SELECT
+                o.Id,
+                o.ChatId,
+                o.DisplayName,
+                o.DrinkType,
+                o.ShotCount,
+                o.WithChocolate,
+                o.PriceInToman,
+                o.CreatedAt,
+                m.NamePersian   AS DrinkNamePersian,
+                m.Unit          AS Unit,
+                m.SupportsShots AS HasShots
+            FROM CoffeeOrders o
+            LEFT JOIN MenuItems m ON m.ItemKey = o.DrinkType
+            WHERE o.Id = @Id";
+
+            return await conn.QueryFirstOrDefaultAsync<CoffeeOrder>(sql, new { Id = id });
+        }
+
+        public async Task UpdateOrderAsync(CoffeeOrder order)
+        {
+            using var conn = new SqlConnection(ConnectionString);
+
+            const string sql = @"
+            UPDATE CoffeeOrders
+            SET DrinkType     = @DrinkType,
+                ShotCount     = @ShotCount,
+                WithChocolate = @WithChocolate,
+                PriceInToman  = @PriceInToman
+            WHERE Id = @Id";
+
+            await conn.ExecuteAsync(sql, new
+            {
+                order.Id,
+                order.DrinkType,
+                order.ShotCount,
+                order.WithChocolate,
+                order.PriceInToman
+            });
+        }
+
+        public async Task DeleteOrderAsync(int id)
+        {
+            using var conn = new SqlConnection(ConnectionString);
+
+            const string sql = "DELETE FROM CoffeeOrders WHERE Id = @Id";
+
+            await conn.ExecuteAsync(sql, new { Id = id });
+        }
+
         public async Task<int> GetOrderCountAsync()
         {
             using var conn = new SqlConnection(ConnectionString);

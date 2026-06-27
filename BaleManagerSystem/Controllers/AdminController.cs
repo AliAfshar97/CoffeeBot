@@ -387,6 +387,98 @@ namespace BaleManagerSystem.Controllers
             return View(data);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> EditOrder(int id)
+        {
+            var order = await _orderRepository.GetOrderByIdAsync(id);
+
+            if (order == null)
+            {
+                TempData["Error"] = "سفارش یافت نشد.";
+                return RedirectToAction(nameof(Orders));
+            }
+
+            var vm = new EditOrderViewModel
+            {
+                Id = order.Id,
+                ChatId = order.ChatId,
+                DisplayName = order.DisplayName,
+                DrinkType = order.DrinkType,
+                ShotCount = order.ShotCount,
+                PriceInToman = order.PriceInToman,
+                CreatedAt = order.CreatedAt,
+                MenuItems = await _menuRepository.GetAllAsync()
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditOrder(EditOrderViewModel model)
+        {
+            var order = await _orderRepository.GetOrderByIdAsync(model.Id);
+
+            if (order == null)
+            {
+                TempData["Error"] = "سفارش یافت نشد.";
+                return RedirectToAction(nameof(Orders));
+            }
+
+            if (model.PriceInToman < 0 || model.ShotCount < 1)
+            {
+                TempData["Error"] = "مقدار شات یا مبلغ نامعتبر است.";
+                return RedirectToAction(nameof(EditOrder), new { id = model.Id });
+            }
+
+            var item = await _menuRepository.GetByKeyAsync(model.DrinkType);
+
+            order.DrinkType = model.DrinkType;
+            order.ShotCount = model.ShotCount;
+            order.PriceInToman = model.PriceInToman;
+
+            await _orderRepository.UpdateOrderAsync(order);
+
+            // Keep the matching ledger debit in sync so balances stay correct.
+            await _accountRepository.UpdateOrderDebitAsync(
+                order.Id,
+                order.PriceInToman,
+                BuildOrderLedgerDescription(item, model.DrinkType, model.ShotCount));
+
+            TempData["Message"] = "سفارش با موفقیت اصلاح شد.";
+
+            return RedirectToAction(nameof(Orders));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteOrder(int id)
+        {
+            var order = await _orderRepository.GetOrderByIdAsync(id);
+
+            if (order == null)
+            {
+                TempData["Error"] = "سفارش یافت نشد.";
+                return RedirectToAction(nameof(Orders));
+            }
+
+            // Remove the linked debit first so the user's balance is corrected.
+            await _accountRepository.DeleteOrderDebitAsync(id);
+            await _orderRepository.DeleteOrderAsync(id);
+
+            TempData["Message"] = "سفارش حذف شد و بدهکاری مربوطه نیز برداشته شد.";
+
+            return RedirectToAction(nameof(Orders));
+        }
+
+        private static string BuildOrderLedgerDescription(MenuItem? item, string drinkType, byte shotCount)
+        {
+            var name = item?.NamePersian ?? drinkType;
+
+            if (item != null && item.SupportsShots)
+                return $"سفارش: {name} {shotCount} {item.Unit} (اصلاح‌شده)";
+
+            return $"سفارش: {name} (اصلاح‌شده)";
+        }
+
         // ================= MENU MANAGEMENT =================
 
         private static readonly HashSet<string> ReservedItemKeys = new(StringComparer.OrdinalIgnoreCase)

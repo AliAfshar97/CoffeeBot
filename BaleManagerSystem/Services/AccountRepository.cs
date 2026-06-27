@@ -95,6 +95,34 @@ namespace BaleManagerSystem.Services
             await cmd.ExecuteNonQueryAsync();
         }
 
+        public async Task UpdateOrderDebitAsync(int orderId, int newAmount, string newDescription)
+        {
+            using var conn = new SqlConnection(ConnectionString);
+
+            const string sql = @"
+            UPDATE AccountLedger
+            SET Amount = @Amount, Description = @Description
+            WHERE OrderId = @OrderId AND TransactionType = 'Debit'";
+
+            await conn.ExecuteAsync(sql, new
+            {
+                OrderId = orderId,
+                Amount = newAmount,
+                Description = newDescription
+            });
+        }
+
+        public async Task DeleteOrderDebitAsync(int orderId)
+        {
+            using var conn = new SqlConnection(ConnectionString);
+
+            const string sql = @"
+            DELETE FROM AccountLedger
+            WHERE OrderId = @OrderId AND TransactionType = 'Debit'";
+
+            await conn.ExecuteAsync(sql, new { OrderId = orderId });
+        }
+
         public async Task<AccountsPageViewModel> GetAccountsAsync(
             DateTime? fromDate,
             DateTime? toDate)
