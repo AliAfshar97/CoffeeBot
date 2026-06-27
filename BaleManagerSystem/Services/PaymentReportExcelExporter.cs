@@ -75,11 +75,10 @@ namespace BaleManagerSystem.Services
             sheet.Cell(1, 2).Value = "شناسه چت";
             sheet.Cell(1, 3).Value = "نوشیدنی";
             sheet.Cell(1, 4).Value = "شات";
-            sheet.Cell(1, 5).Value = "شکلات";
-            sheet.Cell(1, 6).Value = "مبلغ (تومان)";
-            sheet.Cell(1, 7).Value = "تاریخ";
+            sheet.Cell(1, 5).Value = "مبلغ (تومان)";
+            sheet.Cell(1, 6).Value = "تاریخ";
 
-            var headerRange = sheet.Range(1, 1, 1, 7);
+            var headerRange = sheet.Range(1, 1, 1, 6);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
 
@@ -93,10 +92,9 @@ namespace BaleManagerSystem.Services
                     sheet.Cell(row, 2).Value = person.ChatId;
                     sheet.Cell(row, 3).Value = order.DrinkNamePersian ?? PersianLabels.Drink(order.DrinkType);
                     sheet.Cell(row, 4).Value = order.ShotCount;
-                    sheet.Cell(row, 5).Value = PersianLabels.YesNo(order.WithChocolate);
-                    sheet.Cell(row, 6).Value = order.PriceInToman;
-                    sheet.Cell(row, 7).Value = order.CreatedAt;
-                    sheet.Cell(row, 7).Style.DateFormat.Format = "yyyy-MM-dd HH:mm";
+                    sheet.Cell(row, 5).Value = order.PriceInToman;
+                    sheet.Cell(row, 6).Value = order.CreatedAt;
+                    sheet.Cell(row, 6).Style.DateFormat.Format = "yyyy-MM-dd HH:mm";
                     row++;
                 }
             }

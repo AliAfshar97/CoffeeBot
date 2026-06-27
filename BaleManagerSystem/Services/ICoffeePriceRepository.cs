@@ -4,13 +4,9 @@ namespace BaleManagerSystem.Services
 {
     public interface ICoffeePriceRepository
     {
-        Task<List<CoffeePrice>> GetAllAsync();
-
         Task<List<CoffeePrice>> GetByDrinkAsync(string drinkType);
 
         Task<int?> GetPriceAsync(string drinkType, byte shotCount, bool withChocolate);
-
-        Task UpdatePricesAsync(IEnumerable<CoffeePrice> prices);
 
         // Ensure CoffeePrices has exactly the combinations a menu item needs
         // (creates missing rows at price 0, removes combinations no longer valid).

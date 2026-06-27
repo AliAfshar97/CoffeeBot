@@ -43,6 +43,31 @@ namespace BaleManagerSystem.Services
             return (int)(await cmd.ExecuteScalarAsync() ?? 0);
         }
 
+        public async Task AddManualDebitAsync(
+            long chatId,
+            int amount,
+            string description,
+            string? createdBy)
+        {
+            using var conn = new SqlConnection(ConnectionString);
+
+            await conn.OpenAsync();
+
+            var cmd = new SqlCommand(@"
+            INSERT INTO AccountLedger
+            (ChatId, TransactionType, Amount, Description, CreatedBy, CreatedAt)
+            VALUES
+            (@ChatId, 'Debit', @Amount, @Description, @CreatedBy, GETDATE())
+            ", conn);
+
+            cmd.Parameters.AddWithValue("@ChatId", chatId);
+            cmd.Parameters.AddWithValue("@Amount", amount);
+            cmd.Parameters.AddWithValue("@Description", description);
+            cmd.Parameters.AddWithValue("@CreatedBy", (object?)createdBy ?? DBNull.Value);
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+
         public async Task AddCreditAsync(
             long chatId,
             int amount,

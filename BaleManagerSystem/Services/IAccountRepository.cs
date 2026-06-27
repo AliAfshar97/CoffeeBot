@@ -11,6 +11,12 @@ namespace BaleManagerSystem.Services
             string description,
             int orderId);
 
+        Task AddManualDebitAsync(
+            long chatId,
+            int amount,
+            string description,
+            string? createdBy);
+
         Task AddCreditAsync(
             long chatId,
             int amount,

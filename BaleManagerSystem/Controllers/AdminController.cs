@@ -387,38 +387,6 @@ namespace BaleManagerSystem.Controllers
             return View(data);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Prices()
-        {
-            var vm = new PricesPageViewModel
-            {
-                Prices = await _priceRepository.GetAllAsync()
-            };
-
-            return View(vm);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Prices(PricesPageViewModel vm)
-        {
-            if (vm.Prices == null || !vm.Prices.Any())
-            {
-                vm.Prices = await _priceRepository.GetAllAsync();
-
-                ViewBag.Message = "قیمتی برای ذخیره وجود ندارد.";
-
-                return View(vm);
-            }
-
-            await _priceRepository.UpdatePricesAsync(vm.Prices);
-
-            ViewBag.Message = "قیمت‌ها با موفقیت ذخیره شد.";
-
-            vm.Prices = await _priceRepository.GetAllAsync();
-
-            return View(vm);
-        }
-
         // ================= MENU MANAGEMENT =================
 
         private static readonly HashSet<string> ReservedItemKeys = new(StringComparer.OrdinalIgnoreCase)
@@ -671,6 +639,26 @@ namespace BaleManagerSystem.Controllers
                 User.Identity?.Name ?? "admin");
 
             TempData["Message"] = $"مبلغ {model.Amount:N0} تومان برای {model.DisplayName} به حساب اضافه شد.";
+
+            return RedirectToAction(nameof(Accounts));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddDebit(AddDebitViewModel model)
+        {
+            if (model.Amount <= 0)
+            {
+                TempData["Error"] = "مبلغ بدهکاری باید بیشتر از صفر باشد.";
+                return RedirectToAction(nameof(Accounts));
+            }
+
+            await _accountRepository.AddManualDebitAsync(
+                model.ChatId,
+                model.Amount,
+                model.Description ?? "بدهکاری دستی توسط مدیر",
+                User.Identity?.Name ?? "admin");
+
+            TempData["Message"] = $"مبلغ {model.Amount:N0} تومان بدهکاری برای {model.DisplayName} ثبت شد.";
 
             return RedirectToAction(nameof(Accounts));
         }

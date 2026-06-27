@@ -198,6 +198,72 @@
 
         </div>
 
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+
+            <div class="card-body">
+
+                <h5 class="fw-bold mb-3">افزودن بدهکاری دستی</h5>
+
+                <form asp-action="AddDebit" method="post" class="row g-3">
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">کاربر</label>
+
+                        <select name="ChatId" class="form-select" required id="debitUserSelect">
+
+                            <option value="">انتخاب کاربر...</option>
+
+                            @foreach (var user in users.Where(u => !string.IsNullOrWhiteSpace(u.DisplayName)))
+                            {
+                                <option value="@user.ChatId" data-name="@user.DisplayName">
+                                    @user.DisplayName (@user.ChatId)
+                                </option>
+                            }
+
+                        </select>
+
+                        <input type="hidden" name="DisplayName" id="debitDisplayName" />
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">مبلغ (تومان)</label>
+
+                        <input type="number"
+                               name="Amount"
+                               min="1"
+                               class="form-control"
+                               required />
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">توضیحات</label>
+
+                        <input type="text"
+                               name="Description"
+                               class="form-control"
+                               placeholder="بدهکاری دستی" />
+
+                    </div>
+
+                    <div class="col-md-2 d-flex align-items-end">
+
+                        <button type="submit" class="btn btn-danger btn-modern w-100">
+                            ثبت بدهکاری
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
         @foreach (var person in Model.Balances)
         {
             <div class="card border-0 shadow-sm rounded-4 mb-3">
@@ -331,6 +397,11 @@
         document.getElementById("creditUserSelect")?.addEventListener("change", function () {
             const selected = this.options[this.selectedIndex];
             document.getElementById("creditDisplayName").value = selected.dataset.name || "";
+        });
+
+        document.getElementById("debitUserSelect")?.addEventListener("change", function () {
+            const selected = this.options[this.selectedIndex];
+            document.getElementById("debitDisplayName").value = selected.dataset.name || "";
         });
     </script>
 }

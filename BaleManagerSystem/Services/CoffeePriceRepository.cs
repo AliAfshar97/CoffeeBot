@@ -16,20 +16,6 @@ namespace BaleManagerSystem.Services
         private string ConnectionString =>
             _configuration.GetConnectionString("SaleBotManagerDB")!;
 
-        public async Task<List<CoffeePrice>> GetAllAsync()
-        {
-            using var conn = new SqlConnection(ConnectionString);
-
-            const string sql = @"
-            SELECT Id, DrinkType, ShotCount, WithChocolate, PriceInToman
-            FROM CoffeePrices
-            ORDER BY DrinkType, ShotCount, WithChocolate";
-
-            var result = await conn.QueryAsync<CoffeePrice>(sql);
-
-            return result.ToList();
-        }
-
         public async Task<List<CoffeePrice>> GetByDrinkAsync(string drinkType)
         {
             using var conn = new SqlConnection(ConnectionString);
@@ -65,27 +51,6 @@ namespace BaleManagerSystem.Services
                 ShotCount = shotCount,
                 WithChocolate = withChocolate
             });
-        }
-
-        public async Task UpdatePricesAsync(IEnumerable<CoffeePrice> prices)
-        {
-            using var conn = new SqlConnection(ConnectionString);
-
-            await conn.OpenAsync();
-
-            foreach (var price in prices)
-            {
-                var cmd = new SqlCommand(@"
-                UPDATE CoffeePrices
-                SET PriceInToman = @PriceInToman
-                WHERE Id = @Id
-                ", conn);
-
-                cmd.Parameters.AddWithValue("@Id", price.Id);
-                cmd.Parameters.AddWithValue("@PriceInToman", price.PriceInToman);
-
-                await cmd.ExecuteNonQueryAsync();
-            }
         }
 
         public async Task SyncItemPricesAsync(
