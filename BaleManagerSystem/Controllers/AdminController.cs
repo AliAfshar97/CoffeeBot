@@ -886,7 +886,7 @@ namespace BaleManagerSystem.Controllers
             if (receipt == null)
                 return NotFound();
 
-            var imageBytes = await _receiptFiles.GetReceiptImageAsync(
+            var (imageBytes, contentType) = await _receiptFiles.GetReceiptImageAsync(
                 _botClient,
                 receipt,
                 cancellationToken);
@@ -894,7 +894,7 @@ namespace BaleManagerSystem.Controllers
             if (imageBytes == null || imageBytes.Length == 0)
                 return NotFound();
 
-            return File(imageBytes, "image/jpeg");
+            return File(imageBytes, contentType);
         }
 
         [HttpPost]

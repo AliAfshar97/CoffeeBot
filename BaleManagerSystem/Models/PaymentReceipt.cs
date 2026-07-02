@@ -12,6 +12,10 @@ namespace BaleManagerSystem.Models
 
         public string? LocalFilePath { get; set; }
 
+        public byte[]? ImageContent { get; set; }
+
+        public string? ImageContentType { get; set; }
+
         public string? UserCaption { get; set; }
 
         public string Status { get; set; } = ReceiptStatuses.Pending;

@@ -40,6 +40,8 @@ namespace BaleManagerSystem.Services
 
         Task UpdateReceiptFilePathAsync(int receiptId, string localFilePath);
 
+        Task UpdateReceiptImageAsync(int receiptId, byte[] content, string contentType);
+
         Task ApproveReceiptAsync(int receiptId, int creditAmount, string? adminNote, string createdBy);
 
         Task RejectReceiptAsync(int receiptId, string? adminNote);

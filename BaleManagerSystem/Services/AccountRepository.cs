@@ -243,6 +243,7 @@ namespace BaleManagerSystem.Services
             const string sql = @"
             SELECT
                 Id, ChatId, DisplayName, TelegramFileId, LocalFilePath,
+                ImageContent, ImageContentType,
                 UserCaption, Status, CreditAmount, AdminNote, CreatedAt, ProcessedAt
             FROM PaymentReceipts
             WHERE Id = @Id";
@@ -282,6 +283,24 @@ namespace BaleManagerSystem.Services
             WHERE Id = @Id";
 
             await conn.ExecuteAsync(sql, new { Id = receiptId, LocalFilePath = localFilePath });
+        }
+
+        public async Task UpdateReceiptImageAsync(int receiptId, byte[] content, string contentType)
+        {
+            using var conn = new SqlConnection(ConnectionString);
+
+            const string sql = @"
+            UPDATE PaymentReceipts
+            SET ImageContent = @ImageContent,
+                ImageContentType = @ImageContentType
+            WHERE Id = @Id";
+
+            await conn.ExecuteAsync(sql, new
+            {
+                Id = receiptId,
+                ImageContent = content,
+                ImageContentType = contentType
+            });
         }
 
         public async Task ApproveReceiptAsync(

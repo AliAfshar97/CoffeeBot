@@ -218,16 +218,11 @@ namespace BaleManagerSystem.Services
 
             var receiptId = await _accounts.CreateReceiptAsync(receipt);
 
-            var localPath = await _receiptFiles.SaveTelegramPhotoAsync(
+            await _receiptFiles.SaveTelegramPhotoToDatabaseAsync(
                 botClient,
                 fileId,
                 receiptId,
                 ct);
-
-            if (!string.IsNullOrEmpty(localPath))
-            {
-                await _accounts.UpdateReceiptFilePathAsync(receiptId, localPath);
-            }
 
             _states.Remove(chatId);
 
