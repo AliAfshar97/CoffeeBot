@@ -388,6 +388,105 @@ namespace BaleManagerSystem.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> CreateOrder()
+        {
+            var vm = new CreateOrderViewModel
+            {
+                MenuItems = await _menuRepository.GetActiveOrderedAsync(),
+                Users = await _userRepository.GetAllChatIds(),
+                ShotCount = 1
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateOrder(CreateOrderViewModel model)
+        {
+            if (model.ChatId == 0)
+            {
+                TempData["Error"] = "لطفاً کاربر را انتخاب کنید.";
+                return await ReloadCreateOrderView(model);
+            }
+
+            if (string.IsNullOrWhiteSpace(model.DrinkType) || model.ShotCount < 1)
+            {
+                TempData["Error"] = "نوشیدنی و تعداد معتبر انتخاب کنید.";
+                return await ReloadCreateOrderView(model);
+            }
+
+            var item = await _menuRepository.GetByKeyAsync(model.DrinkType);
+
+            if (item == null)
+            {
+                TempData["Error"] = "نوشیدنی انتخاب‌شده معتبر نیست.";
+                return await ReloadCreateOrderView(model);
+            }
+
+            var price = model.PriceInToman;
+
+            if (price <= 0)
+            {
+                price = await _priceRepository.GetPriceAsync(
+                    model.DrinkType,
+                    model.ShotCount,
+                    withChocolate: false) ?? 0;
+            }
+
+            if (price < 0)
+            {
+                TempData["Error"] = "مبلغ نامعتبر است.";
+                return await ReloadCreateOrderView(model);
+            }
+
+            var displayName = model.DisplayName;
+
+            if (string.IsNullOrWhiteSpace(displayName))
+            {
+                var user = await _userRepository.GetUserByChatIdAsync(model.ChatId);
+                displayName = user?.DisplayName ?? "نامشخص";
+            }
+
+            var order = new CoffeeOrder
+            {
+                ChatId = model.ChatId,
+                DisplayName = displayName,
+                DrinkType = model.DrinkType,
+                ShotCount = model.ShotCount,
+                WithChocolate = false,
+                PriceInToman = price
+            };
+
+            var orderId = await _orderRepository.SaveOrderAsync(order);
+
+            await _accountRepository.AddDebitAsync(
+                model.ChatId,
+                price,
+                BuildNewOrderLedgerDescription(item, model.DrinkType, model.ShotCount),
+                orderId);
+
+            TempData["Message"] = "سفارش با موفقیت ثبت شد.";
+
+            return RedirectToAction(nameof(Orders));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetOrderPrice(string drinkType, byte shotCount)
+        {
+            var price = await _priceRepository.GetPriceAsync(drinkType, shotCount, withChocolate: false);
+
+            return Json(new { price });
+        }
+
+        private async Task<IActionResult> ReloadCreateOrderView(CreateOrderViewModel model)
+        {
+            model.MenuItems = await _menuRepository.GetActiveOrderedAsync();
+            model.Users = await _userRepository.GetAllChatIds();
+
+            return View("CreateOrder", model);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> EditOrder(int id)
         {
             var order = await _orderRepository.GetOrderByIdAsync(id);
@@ -477,6 +576,16 @@ namespace BaleManagerSystem.Controllers
                 return $"سفارش: {name} {shotCount} {item.Unit} (اصلاح‌شده)";
 
             return $"سفارش: {name} (اصلاح‌شده)";
+        }
+
+        private static string BuildNewOrderLedgerDescription(MenuItem? item, string drinkType, byte shotCount)
+        {
+            var name = item?.NamePersian ?? drinkType;
+
+            if (item != null && item.SupportsShots)
+                return $"سفارش: {name} {shotCount} {item.Unit} (دستی)";
+
+            return $"سفارش: {name} (دستی)";
         }
 
         // ================= MENU MANAGEMENT =================

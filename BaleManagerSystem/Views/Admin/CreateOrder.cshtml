@@ -1,0 +1,151 @@
+@model BaleManagerSystem.Models.ViewModels.CreateOrderViewModel
+
+@{
+    ViewData["Title"] = "ثبت سفارش دستی";
+}
+
+<div class="card shadow-lg border-0 rounded-4">
+
+    <div class="card-body p-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+
+                <h2 class="fw-bold">
+                    <i class="bi bi-plus-circle text-primary"></i>
+                    ثبت سفارش دستی
+                </h2>
+
+                <p class="text-muted mb-0">
+                    سفارش جدید برای یک کاربر ثبت کنید. بدهکاری مربوطه نیز به حساب کاربر اضافه می‌شود.
+                </p>
+
+            </div>
+
+        </div>
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">@TempData["Error"]</div>
+        }
+
+        <form asp-action="CreateOrder" method="post">
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <label class="form-label">کاربر</label>
+                    <select asp-for="ChatId" class="form-select" required id="userSelect">
+                        <option value="">انتخاب کاربر...</option>
+                        @foreach (var user in Model.Users.Where(u => !string.IsNullOrWhiteSpace(u.DisplayName)))
+                        {
+                            <option value="@user.ChatId" data-name="@user.DisplayName">
+                                @user.DisplayName (@user.ChatId)
+                            </option>
+                        }
+                    </select>
+                    <input type="hidden" asp-for="DisplayName" id="displayNameInput" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">نوشیدنی</label>
+                    <select asp-for="DrinkType" class="form-select" required id="drinkSelect">
+                        <option value="">انتخاب نوشیدنی...</option>
+                        @foreach (var item in Model.MenuItems)
+                        {
+                            <option value="@item.ItemKey"
+                                    data-supports-shots="@item.SupportsShots.ToString().ToLower()">
+                                @item.NamePersian
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">تعداد (شات/لیوان)</label>
+                    <input asp-for="ShotCount" type="number" min="1" class="form-control" id="shotCountInput" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">مبلغ (تومان)</label>
+                    <input asp-for="PriceInToman" type="number" min="0" class="form-control" id="priceInput" />
+                    <div class="form-text">در صورت خالی بودن، از جدول قیمت محاسبه می‌شود.</div>
+                </div>
+
+            </div>
+
+            <div class="alert alert-warning mt-4 mb-0">
+                <i class="bi bi-info-circle"></i>
+                با ثبت سفارش، بدهکاری مربوطه به حساب کاربر اضافه می‌شود.
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary btn-modern">
+                    <i class="bi bi-check-circle"></i>
+                    ثبت سفارش
+                </button>
+
+                <a asp-action="Orders" class="btn btn-outline-secondary btn-modern">انصراف</a>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+@section Scripts
+{
+    <script>
+
+        const userSelect = document.getElementById("userSelect");
+        const displayNameInput = document.getElementById("displayNameInput");
+        const drinkSelect = document.getElementById("drinkSelect");
+        const shotCountInput = document.getElementById("shotCountInput");
+        const priceInput = document.getElementById("priceInput");
+
+        userSelect.addEventListener("change", function () {
+            const selected = this.options[this.selectedIndex];
+            displayNameInput.value = selected.dataset.name || "";
+        });
+
+        async function fetchPrice() {
+            const drinkType = drinkSelect.value;
+            const shotCount = shotCountInput.value;
+
+            if (!drinkType || !shotCount) return;
+
+            try {
+                const response = await fetch(
+                    `@Url.Action("GetOrderPrice")?drinkType=${encodeURIComponent(drinkType)}&shotCount=${shotCount}`);
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+
+                if (data.price != null) {
+                    priceInput.value = data.price;
+                }
+            } catch {
+                // Price lookup is optional; admin can enter manually.
+            }
+        }
+
+        drinkSelect.addEventListener("change", function () {
+            const supportsShots = this.options[this.selectedIndex].dataset.supportsShots === "true";
+
+            if (!supportsShots) {
+                shotCountInput.value = 1;
+                shotCountInput.readOnly = true;
+            } else {
+                shotCountInput.readOnly = false;
+            }
+
+            fetchPrice();
+        });
+
+        shotCountInput.addEventListener("change", fetchPrice);
+
+    </script>
+}
